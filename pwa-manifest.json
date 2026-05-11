@@ -3,18 +3,19 @@
   "short_name": "仓鼠走查",
   "description": "手机截图一键发送到 Figma 画布",
   "start_url": "./mobile.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0a0a0b",
   "theme_color": "#6366f1",
   "icons": [
     {
-      "src": "https://cdn.jsdelivr.net/gh/wanxudong2018-crypto/Figma/icon.png",
+      "src": "icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://cdn.jsdelivr.net/gh/wanxudong2018-crypto/Figma/icon.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
