@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<link rel="manifest" href="./pwa-manifest.json">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW Registered'));
+}
+</script>
 <title>仓鼠走查 - 上传截图</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -77,6 +83,23 @@ const TOKEN = urlParams.get('t') || '';
 
 // 后端 API 地址（写死为你的阿里云地址）
 const API_BASE = 'https://figma-me-review-dxzmljpjyo.cn-hangzhou.fcapp.run';
+
+// --- PWA 分享接收逻辑 ---
+if (urlParams.has('shared')) {
+  (async () => {
+    try {
+      const cache = await caches.open('shared-files');
+      const response = await cache.match('/shared-media');
+      if (response) {
+        const blob = await response.blob();
+        const file = new File([blob], "shared-image.jpg", { type: blob.type });
+        addFiles([file]);
+        // 清理缓存，防止刷新页面重复触发
+        await cache.delete('/shared-media');
+      }
+    } catch (e) { console.error('Shared Error:', e); }
+  })();
+}
 
 const files=[];let selectedCategory='other',totalSent=0;
 document.querySelectorAll('.cat-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');selectedCategory=b.dataset.cat;}));
