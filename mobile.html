@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>仓鼠走查 - 上传截图</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0a0a0b;color:#f0f0f5;min-height:100vh;display:flex;flex-direction:column}
+.header{padding:20px 16px 14px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06)}
+.header h1{font-size:18px;font-weight:600;margin-bottom:4px}
+.header p{font-size:13px;color:#8a8a9a}
+.status{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;font-size:12px;color:#4ade80}
+.status .dot{width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,0.5)}
+.content{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px}
+.upload-area{border:2px dashed rgba(255,255,255,0.1);border-radius:16px;padding:32px 20px;text-align:center;background:rgba(255,255,255,0.02)}
+.upload-icon{color:rgba(255,255,255,0.2);margin-bottom:12px}
+.upload-text{font-size:14px;color:#8a8a9a;margin-bottom:16px}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:12px 22px;border-radius:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-primary{background:#6366f1;color:#fff}
+.btn-secondary{background:rgba(255,255,255,0.08);color:#f0f0f5;border:1px solid rgba(255,255,255,0.1)}
+.file-input{display:none}
+.desc-section{display:none}
+.desc-section.visible{display:block}
+.desc-input{width:100%;padding:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#f0f0f5;font-size:14px;resize:none;outline:none}
+.category-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cat-btn{padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#8a8a9a;font-size:12px;cursor:pointer}
+.cat-btn.active{border-color:rgba(99,102,241,0.5);background:rgba(99,102,241,0.1);color:#6366f1}
+.preview-list{display:flex;flex-direction:column;gap:6px}
+.preview-item{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.05)}
+.preview-thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#1a1a1e}
+.preview-info{flex:1;min-width:0}
+.preview-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preview-size{font-size:11px;color:#8a8a9a;margin-top:2px}
+.preview-status{font-size:11px;padding:3px 10px;border-radius:8px;font-weight:500}
+.preview-status.pending{color:#8a8a9a;background:rgba(255,255,255,0.05)}
+.preview-status.uploading{color:#6366f1;background:rgba(99,102,241,0.1)}
+.preview-status.done{color:#4ade80;background:rgba(74,222,128,0.1)}
+.preview-status.error{color:#ff4d4f;background:rgba(255,77,79,0.1)}
+.send-btn{width:100%;padding:16px;border-radius:14px;border:none;background:#6366f1;color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+.send-btn:disabled{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.25);cursor:not-allowed}
+.counter{text-align:center;font-size:12px;color:#8a8a9a;padding:4px}
+</style>
+</head>
+<body>
+<div class="header"><h1>🐹 仓鼠走查</h1><p>截图上传到 Figma 画布</p></div>
+<div class="status"><span class="dot"></span> 已连接到 Figma</div>
+<div class="content">
+    <div class="upload-area">
+        <div class="upload-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="upload-text">选择截图或拍照上传</div>
+        <div class="btn-row">
+            <label class="btn btn-primary">📷 选择图片<input type="file" class="file-input" id="fileInput" accept="image/*" multiple></label>
+            <label class="btn btn-secondary">📸 拍照<input type="file" class="file-input" id="cameraInput" accept="image/*" capture="environment"></label>
+        </div>
+    </div>
+    <div class="desc-section" id="descSection">
+        <textarea class="desc-input" id="descInput" rows="2" placeholder="描述问题（可选）"></textarea>
+        <div class="category-row">
+            <span class="cat-btn active" data-cat="other">其他</span>
+            <span class="cat-btn" data-cat="visual">视觉</span>
+            <span class="cat-btn" data-cat="interaction">交互</span>
+            <span class="cat-btn" data-cat="spacing">间距</span>
+            <span class="cat-btn" data-cat="copy">文案</span>
+        </div>
+    </div>
+    <div class="preview-list" id="previewList"></div>
+    <button class="send-btn" id="sendBtn" disabled>发送到 Figma</button>
+    <div class="counter" id="counterText"></div>
+</div>
+<script>
+// 改为从网址参数读取身份信息
+const urlParams = new URLSearchParams(window.location.search);
+const SID = urlParams.get('sid') || '';
+const TOKEN = urlParams.get('t') || '';
+
+// 后端 API 地址（写死为你的阿里云地址）
+const API_BASE = 'https://figma-me-review-dxzmljpjyo.cn-hangzhou.fcapp.run';
+
+const files=[];let selectedCategory='other',totalSent=0;
+document.querySelectorAll('.cat-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');selectedCategory=b.dataset.cat;}));
+document.getElementById('fileInput').addEventListener('change',e=>{addFiles(e.target.files);e.target.value='';});
+document.getElementById('cameraInput').addEventListener('change',e=>{addFiles(e.target.files);e.target.value='';});
+function addFiles(f){Array.from(f).forEach(x=>{if(x.type.match(/^image\/./))files.push({file:x,status:'pending'});});renderPreviews();document.getElementById('descSection').classList.toggle('visible',files.length>0);document.getElementById('sendBtn').disabled=files.filter(f=>f.status==='pending').length===0;}
+function renderPreviews(){const l=document.getElementById('previewList');l.innerHTML='';const m={pending:'待发送',uploading:'上传中...',done:'✅ 完成',error:'❌ 失败'};files.forEach(item=>{const f=item.file,sz=f.size>1048576?(f.size/1048576).toFixed(1)+' MB':Math.round(f.size/1024)+' KB',d=document.createElement('div');d.className='preview-item';const errText=item.errMsg?'<div style="color:red;font-size:12px;margin-top:4px;">'+item.errMsg+'</div>':'';d.innerHTML='<img class="preview-thumb" src="'+URL.createObjectURL(f)+'"><div class="preview-info"><div class="preview-name">'+f.name+'</div><div class="preview-size">'+sz+'</div>'+errText+'</div><span class="preview-status '+item.status+'">'+m[item.status]+'</span>';l.appendChild(d);});}
+document.getElementById('sendBtn').addEventListener('click',async()=>{document.getElementById('sendBtn').disabled=true;const desc=document.getElementById('descInput').value.trim();for(const item of files.filter(f=>f.status==='pending')){item.status='uploading';renderPreviews();try{const b64=await fileToBase64(item.file);const r=await fetch(API_BASE+'/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:SID,t:TOKEN,image:b64,description:desc,category:selectedCategory,filename:item.file.name})});if(!r.ok){const txt=await r.text();throw new Error(r.status+' '+txt);}const data=await r.json();item.status=data.ok?'done':'error';if(data.ok)totalSent++;else throw new Error(data.error);}catch(e){item.status='error';item.errMsg=e.message||e.toString();}renderPreviews();}document.getElementById('counterText').textContent='本次已发送 '+totalSent+' 张';document.getElementById('sendBtn').disabled=files.filter(f=>f.status==='pending').length===0;});
+function fileToBase64(f){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.onerror=j;rd.readAsDataURL(f);});}
+</script>
+</body>
+</html>
