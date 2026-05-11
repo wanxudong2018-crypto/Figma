@@ -84,8 +84,33 @@ document.getElementById('fileInput').addEventListener('change',e=>{addFiles(e.ta
 document.getElementById('cameraInput').addEventListener('change',e=>{addFiles(e.target.files);e.target.value='';});
 function addFiles(f){Array.from(f).forEach(x=>{if(x.type.match(/^image\/./))files.push({file:x,status:'pending'});});renderPreviews();document.getElementById('descSection').classList.toggle('visible',files.length>0);document.getElementById('sendBtn').disabled=files.filter(f=>f.status==='pending').length===0;}
 function renderPreviews(){const l=document.getElementById('previewList');l.innerHTML='';const m={pending:'待发送',uploading:'上传中...',done:'✅ 完成',error:'❌ 失败'};files.forEach(item=>{const f=item.file,sz=f.size>1048576?(f.size/1048576).toFixed(1)+' MB':Math.round(f.size/1024)+' KB',d=document.createElement('div');d.className='preview-item';const errText=item.errMsg?'<div style="color:red;font-size:12px;margin-top:4px;">'+item.errMsg+'</div>':'';d.innerHTML='<img class="preview-thumb" src="'+URL.createObjectURL(f)+'"><div class="preview-info"><div class="preview-name">'+f.name+'</div><div class="preview-size">'+sz+'</div>'+errText+'</div><span class="preview-status '+item.status+'">'+m[item.status]+'</span>';l.appendChild(d);});}
-document.getElementById('sendBtn').addEventListener('click',async()=>{document.getElementById('sendBtn').disabled=true;const desc=document.getElementById('descInput').value.trim();for(const item of files.filter(f=>f.status==='pending')){item.status='uploading';renderPreviews();try{const b64=await fileToBase64(item.file);const r=await fetch(API_BASE+'/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:SID,t:TOKEN,image:b64,description:desc,category:selectedCategory,filename:item.file.name})});if(!r.ok){const txt=await r.text();throw new Error(r.status+' '+txt);}const data=await r.json();item.status=data.ok?'done':'error';if(data.ok)totalSent++;else throw new Error(data.error);}catch(e){item.status='error';item.errMsg=e.message||e.toString();}renderPreviews();}document.getElementById('counterText').textContent='本次已发送 '+totalSent+' 张';document.getElementById('sendBtn').disabled=files.filter(f=>f.status==='pending').length===0;});
-function fileToBase64(f){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.onerror=j;rd.readAsDataURL(f);});}
+document.getElementById('sendBtn').addEventListener('click',async()=>{document.getElementById('sendBtn').disabled=true;const desc=document.getElementById('descInput').value.trim();for(const item of files.filter(f=>f.status==='pending')){item.status='uploading';renderPreviews();try{const b64=await compressImage(item.file);const r=await fetch(API_BASE+'/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:SID,t:TOKEN,image:b64,description:desc,category:selectedCategory,filename:item.file.name})});if(!r.ok){const txt=await r.text();throw new Error(r.status+' '+txt);}const data=await r.json();item.status=data.ok?'done':'error';if(data.ok)totalSent++;else throw new Error(data.error);}catch(e){item.status='error';item.errMsg=e.message||e.toString();}renderPreviews();}document.getElementById('counterText').textContent='本次已发送 '+totalSent+' 张';document.getElementById('sendBtn').disabled=files.filter(f=>f.status==='pending').length===0;});
+function compressImage(file, maxWidth = 1920, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                let w = img.width;
+                let h = img.height;
+                if (w > maxWidth) {
+                    h = Math.round((h * maxWidth) / w);
+                    w = maxWidth;
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+        };
+        reader.onerror = reject;
+    });
+}
 </script>
 </body>
 </html>
