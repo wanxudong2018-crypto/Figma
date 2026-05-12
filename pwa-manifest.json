@@ -2,8 +2,8 @@
   "name": "仓鼠走查",
   "short_name": "仓鼠走查",
   "description": "手机截图一键发送到 Figma 画布",
-  "start_url": "./mobile.html",
-  "scope": "./",
+  "start_url": "/Figma/mobile.html",
+  "scope": "/Figma/",
   "display": "standalone",
   "background_color": "#0a0a0b",
   "theme_color": "#6366f1",
@@ -21,7 +21,7 @@
     }
   ],
   "share_target": {
-    "action": "./mobile.html",
+    "action": "/Figma/mobile.html",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
