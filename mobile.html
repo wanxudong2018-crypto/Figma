@@ -168,9 +168,17 @@
         }
 
         function configureShortcut() {
-            if (!_uploadUrl) return;
-            // 通过 iOS shortcuts URL scheme 把专属链接传入快捷指令
-            // 快捷指令收到文字输入后保存到 iCloud，后续上传时读取
+            if (!_uploadUrl) {
+                alert('请先通过扫描 Figma 插件中的二维码访问此页面');
+                return;
+            }
+            // 微信内置浏览器屏蔽 shortcuts:// 协议，需引导用户在 Safari 中打开
+            const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+            if (isWeChat) {
+                alert('⚠️ 微信内无法直接跳转快捷指令\n\n请：\n1. 点右上角「···」\n2. 选「在浏览器中打开」\n3. 再次点击「一键配置快捷指令」');
+                return;
+            }
+            // Safari 中正常跳转
             const shortcutName = encodeURIComponent('仓鼠快传');
             const inputText = encodeURIComponent(_uploadUrl);
             window.location.href = `shortcuts://run-shortcut?name=${shortcutName}&input=text&text=${inputText}`;
