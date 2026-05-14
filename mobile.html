@@ -197,7 +197,10 @@
                 }
             } catch (err) {
                 console.error(err);
-                alert('⚠️ 会话已失效或网络错误\n请重新扫描电脑插件上的二维码');
+                const msg = err.message && err.message !== 'undefined'
+                    ? `⚠️ ${err.message}`
+                    : '⚠️ 会话已失效或网络错误\n请重新扫描电脑插件上的二维码';
+                alert(msg);
             } finally {
                 btnSend.disabled = false;
                 btnSend.textContent = '确认发送到 Figma';
