@@ -130,28 +130,43 @@
         box-sizing: border-box;
     ">📥 下载 iOS 快捷指令</a>
 
-    <!-- 快捷指令一键配置（扫码后显示） -->
+    <!-- 快捷指令专属链接（扫码后显示） -->
     <div id="shortcutConfigCard" style="
         display: none;
         width: 100%;
         max-width: 400px;
         margin-top: 12px;
+        background: #fff8f0;
+        border: 1.5px solid #FF8C00;
+        border-radius: 12px;
+        padding: 16px;
         box-sizing: border-box;
     ">
-        <button onclick="configureShortcut()" style="
+        <div style="font-size: 14px; font-weight: 600; color: #FF8C00; margin-bottom: 6px;">⚙️ 配置快捷指令专属链接</div>
+        <div style="font-size: 12px; color: #888; margin-bottom: 10px; line-height: 1.6;">
+            复制下方链接 → 打开「发送到 figma」快捷指令 → 粘贴到顶部文字框中
+        </div>
+        <div id="uploadUrlBox" style="
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 11px;
+            color: #333;
+            word-break: break-all;
+            margin-bottom: 10px;
+            font-family: monospace;
+            line-height: 1.5;
+        ">正在生成...</div>
+        <button onclick="copyUploadUrl()" id="copyBtn" style="
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: #FF8C00;
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 15px;
             font-weight: 600;
-            cursor: pointer;
-        ">⚡ 一键配置快捷指令</button>
-        <div style="font-size: 11px; color: #999; text-align: center; margin-top: 8px;">
-            点击后跳转快捷指令，自动写入你的专属链接
-        </div>
+        ">📋 复制专属链接</button>
     </div>
 
     <script>
@@ -165,23 +180,27 @@
         if (api && sid && t) {
             _uploadUrl = `${api}/api/upload?sid=${sid}&t=${t}`;
             document.getElementById('shortcutConfigCard').style.display = 'block';
+            document.getElementById('uploadUrlBox').textContent = _uploadUrl;
         }
 
-        function configureShortcut() {
-            if (!_uploadUrl) {
-                alert('请先通过扫描 Figma 插件中的二维码访问此页面');
-                return;
+        function copyUploadUrl() {
+            if (!_uploadUrl) return;
+            const btn = document.getElementById('copyBtn');
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(_uploadUrl).then(() => {
+                    btn.textContent = '✅ 已复制！';
+                    setTimeout(() => { btn.textContent = '📋 复制专属链接'; }, 2000);
+                });
+            } else {
+                const el = document.createElement('textarea');
+                el.value = _uploadUrl;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                btn.textContent = '✅ 已复制！';
+                setTimeout(() => { btn.textContent = '📋 复制专属链接'; }, 2000);
             }
-            // 微信内置浏览器屏蔽 shortcuts:// 协议，需引导用户在 Safari 中打开
-            const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
-            if (isWeChat) {
-                alert('⚠️ 微信内无法直接跳转快捷指令\n\n请：\n1. 点右上角「···」\n2. 选「在浏览器中打开」\n3. 再次点击「一键配置快捷指令」');
-                return;
-            }
-            // Safari 中正常跳转
-            const shortcutName = encodeURIComponent('发送到 figma');
-            const inputText = encodeURIComponent(_uploadUrl);
-            window.location.href = `shortcuts://run-shortcut?name=${shortcutName}&input=text&text=${inputText}`;
         }
 
         const fileInput = document.getElementById('fileInput');
