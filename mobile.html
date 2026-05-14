@@ -130,42 +130,28 @@
         box-sizing: border-box;
     ">📥 下载 iOS 快捷指令</a>
 
-    <!-- 快捷指令个人专属配置卡片（扫码后显示） -->
+    <!-- 快捷指令一键配置（扫码后显示） -->
     <div id="shortcutConfigCard" style="
         display: none;
         width: 100%;
         max-width: 400px;
         margin-top: 12px;
-        background: #fff8f0;
-        border: 1.5px solid #FF8C00;
-        border-radius: 12px;
-        padding: 16px;
         box-sizing: border-box;
     ">
-        <div style="font-size: 14px; font-weight: 600; color: #FF8C00; margin-bottom: 8px;">⚙️ 配置你的专属链接</div>
-        <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
-            安装快捷指令后，打开快捷指令 → 点击右上角「···」→ 将下方链接粘贴到 <b>upload_url</b> 字段
-        </div>
-        <div id="uploadUrlBox" style="
-            background: #f5f5f5;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 11px;
-            color: #333;
-            word-break: break-all;
-            margin-bottom: 10px;
-            font-family: monospace;
-        ">正在生成...</div>
-        <button onclick="copyUploadUrl()" style="
+        <button onclick="configureShortcut()" style="
             width: 100%;
-            padding: 10px;
+            padding: 14px;
             background: #FF8C00;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: 600;
-        ">📋 复制专属链接</button>
+            cursor: pointer;
+        ">⚡ 一键配置快捷指令</button>
+        <div style="font-size: 11px; color: #999; text-align: center; margin-top: 8px;">
+            点击后跳转快捷指令，自动写入你的专属链接
+        </div>
     </div>
 
     <script>
@@ -175,25 +161,19 @@
         const t = params.get('t');
 
         // 如果是扫码进来（有 sid/t），显示快捷指令配置卡片
+        let _uploadUrl = '';
         if (api && sid && t) {
-            const uploadUrl = `${api}/api/upload?sid=${sid}&t=${t}`;
+            _uploadUrl = `${api}/api/upload?sid=${sid}&t=${t}`;
             document.getElementById('shortcutConfigCard').style.display = 'block';
-            document.getElementById('uploadUrlBox').textContent = uploadUrl;
         }
 
-        function copyUploadUrl() {
-            const url = document.getElementById('uploadUrlBox').textContent;
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(url).then(() => showToast('✅ 已复制！粘贴到快捷指令中'));
-            } else {
-                const el = document.createElement('textarea');
-                el.value = url;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-                showToast('✅ 已复制！粘贴到快捷指令中');
-            }
+        function configureShortcut() {
+            if (!_uploadUrl) return;
+            // 通过 iOS shortcuts URL scheme 把专属链接传入快捷指令
+            // 快捷指令收到文字输入后保存到 iCloud，后续上传时读取
+            const shortcutName = encodeURIComponent('仓鼠快传');
+            const inputText = encodeURIComponent(_uploadUrl);
+            window.location.href = `shortcuts://run-shortcut?name=${shortcutName}&input=text&text=${inputText}`;
         }
 
         const fileInput = document.getElementById('fileInput');
