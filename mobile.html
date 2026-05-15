@@ -215,7 +215,9 @@
         }
 
         .step-btn-dark {
-            /* Same as step-btn now based on user feedback */
+            background: #1A1A2E !important;
+            color: #FFFFFF !important;
+            border: none;
         }
 
         .step-btn.success {
@@ -343,7 +345,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
             复制专属链接
         </button>
-        <div class="step-hint">
+        <div class="step-hint" id="copyHint" style="display:none">
             复制专属链接 → 打开「发送到 figma」快捷指令 → 粘贴到顶部文字框中
         </div>
     </div>
@@ -370,16 +372,17 @@
 
         // ─── URL Params ─────────────────────────────────────────────────
         const params = new URLSearchParams(window.location.search);
-        const api = params.get('api'), sid = params.get('sid'), t = params.get('t');
+        const _api = params.get('api'), _sid = params.get('sid'), _t = params.get('t');
 
         let _uploadUrl = '';
-        if (api && sid && t) {
-            _uploadUrl = `${api}/api/upload?sid=${sid}&t=${t}`;
-            document.getElementById('copyHint').style.display = 'block';
+        if (_api && _sid && _t) {
+            _uploadUrl = `${_api}/api/upload?sid=${_sid}&t=${_t}`;
+            const hint = document.getElementById('copyHint');
+            if (hint) hint.style.display = 'block';
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.ready.then(reg => {
                     const sw = reg.active || reg.waiting || reg.installing;
-                    if (sw) sw.postMessage({ type: 'STORE_CREDENTIALS', sid, t, api });
+                    if (sw) sw.postMessage({ type: 'STORE_CREDENTIALS', sid: _sid, t: _t, api: _api });
                 });
             }
         }
@@ -410,9 +413,9 @@
         const uploadZone = document.getElementById('uploadZone');
 
         function showToast(msg, duration) {
-            const t = document.getElementById('toast');
-            t.textContent = msg; t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, duration || 3000);
+            const toastEl = document.getElementById('toast');
+            toastEl.textContent = msg; toastEl.style.display = 'block';
+            setTimeout(() => { toastEl.style.display = 'none'; }, duration || 3000);
         }
 
         // iOS Safari: use addEventListener instead of .onchange for reliability
@@ -422,53 +425,44 @@
 
         async function handleUpload(e) {
             const files = Array.from(e.target.files || []);
-            console.log('[Upload] change fired, files:', files.length, 'api:', api, 'sid:', sid);
+            if (!files.length) return;
 
-            if (!files.length) {
-                console.log('[Upload] No files, skipping');
-                return;
-            }
-
-            // Immediate feedback so user knows something happened
-            showToast(`📂 已选择 ${files.length} 张图片，准备上传…`, 5000);
-
-            if (!api || !sid) {
+            if (!_api || !_sid) {
                 showToast('⚠️ 请重新扫码进入（缺少授权信息）', 4000);
-                console.warn('[Upload] Missing api or sid. URL:', window.location.href);
                 return;
             }
 
+            // 修改：不再自动上传，而是显示确认按钮或直接开始并强制显示进度
             uploadZone.classList.add('uploading');
             uploadZone.onclick = null;
-            document.getElementById('progressFill').style.width = '0%';
-            document.getElementById('progressCount').textContent = `0/${files.length}`;
+            
+            const progressFill = document.getElementById('progressFill');
+            const progressCount = document.getElementById('progressCount');
+            progressFill.style.width = '0%';
+            progressCount.textContent = `0/${files.length}`;
 
             let ok = 0, failed = 0;
             for (let i = 0; i < files.length; i++) {
                 try {
-                    showToast(`⏳ 上传中 ${i + 1}/${files.length}…`, 10000);
+                    showToast(`⏳ 正在传输第 ${i + 1}/${files.length} 张…`, 5000);
                     const base64 = await toBase64(files[i]);
-                    const res = await fetch(`${api}/api/upload?sid=${sid}&t=${t}`, {
+                    const res = await fetch(`${_api}/api/upload?sid=${_sid}&t=${_t}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ image: base64, filename: files[i].name })
                     });
-                    if (!res.ok) {
-                        console.error('[Upload] Server error:', res.status, await res.text());
-                        failed++;
-                    } else {
+                    
+                    if (res.ok) {
                         const data = await res.json();
-                        if (data.ok) ok++;
-                        else { console.error('[Upload] data.ok=false', data); failed++; }
-                    }
+                        if (data.ok) ok++; else failed++;
+                    } else { failed++; }
                 } catch (err) {
-                    console.error('[Upload] Fetch error:', err);
+                    console.error(err);
                     failed++;
-                    showToast(`❌ 网络错误：${err.message}`, 4000);
                 }
                 const pct = Math.round((i + 1) / files.length * 100);
-                document.getElementById('progressFill').style.width = pct + '%';
-                document.getElementById('progressCount').textContent = `${i + 1}/${files.length}`;
+                progressFill.style.width = pct + '%';
+                progressCount.textContent = `${i + 1}/${files.length}`;
             }
 
             uploadZone.classList.remove('uploading');
@@ -476,9 +470,9 @@
             fileInput.value = '';
 
             if (failed === 0) {
-                showToast(`✅ ${ok} 张传输成功！`, 3000);
+                showToast(`✅ 成功传输 ${ok} 张图片！`, 3000);
             } else {
-                showToast(`⚠️ ${ok} 成功 / ${failed} 失败，请重试`, 4000);
+                showToast(`⚠️ ${ok} 张成功，${failed} 张失败`, 4000);
             }
         }
 
