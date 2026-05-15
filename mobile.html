@@ -92,6 +92,19 @@
 </head>
 <body>
     <div id="status-toast"></div>
+
+    <!-- Android 分享结果横幅（?shared=1 跳回时显示） -->
+    <div id="share-result" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        padding: 20px 24px 16px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        z-index: 200;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    "></div>
     <div class="container">
         <div class="header">
             <h1>🐹 仓鼠快传</h1>
@@ -170,17 +183,61 @@
     </div>
 
     <script>
+        // ─── Android Share Target 结果反馈 ───────────────────────────────────
+        (function() {
+            const p = new URLSearchParams(window.location.search);
+            if (p.get('shared') !== '1') return;
+
+            const banner = document.getElementById('share-result');
+            const count = p.get('count');
+            const total = p.get('total');
+            const error = p.get('error');
+
+            if (count) {
+                banner.style.background = '#e6f9f0';
+                banner.style.color = '#0a7c42';
+                banner.textContent = total && total !== count
+                    ? `✅ 已发送 ${count}/${total} 张图片到 Figma`
+                    : `✅ ${count} 张图片已发送到 Figma！`;
+            } else if (error === 'no_creds') {
+                banner.style.background = '#fff3e0';
+                banner.style.color = '#e65100';
+                banner.textContent = '⚠️ 请先扫码配置专属链接，再使用原生分享';
+            } else if (error === 'no_file') {
+                banner.style.background = '#fff3e0';
+                banner.style.color = '#e65100';
+                banner.textContent = '⚠️ 未检测到图片文件';
+            } else {
+                banner.style.background = '#fce8e8';
+                banner.style.color = '#c62828';
+                banner.textContent = '❌ 上传失败，请检查网络后重试';
+            }
+
+            banner.style.display = 'block';
+            // 4秒后自动收起
+            setTimeout(() => { banner.style.display = 'none'; }, 4000);
+        })();
         const params = new URLSearchParams(window.location.search);
         const api = params.get('api');
         const sid = params.get('sid');
         const t = params.get('t');
 
-        // 如果是扫码进来（有 sid/t），显示快捷指令配置卡片
+        // 如果是扫码进来（有 sid/t），显示快捷指令配置卡片，并把凭证同步给 Service Worker
         let _uploadUrl = '';
         if (api && sid && t) {
             _uploadUrl = `${api}/api/upload?sid=${sid}&t=${t}`;
             document.getElementById('shortcutConfigCard').style.display = 'block';
             document.getElementById('uploadUrlBox').textContent = _uploadUrl;
+
+            // ── 将凭证推送给 SW（Android Share Target 自动上传所需）────────
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(reg => {
+                    const target = reg.active || reg.waiting || reg.installing;
+                    if (target) {
+                        target.postMessage({ type: 'STORE_CREDENTIALS', sid, t, api });
+                    }
+                });
+            }
         }
 
         function copyUploadUrl() {

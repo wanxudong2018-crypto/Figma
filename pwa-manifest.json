@@ -1,6 +1,6 @@
 {
-  "name": "仓鼠走查",
-  "short_name": "仓鼠走查",
+  "name": "仓鼠快传",
+  "short_name": "仓鼠快传",
   "description": "手机截图一键发送到 Figma 画布",
   "start_url": "/Figma/mobile.html",
   "scope": "/Figma/",
