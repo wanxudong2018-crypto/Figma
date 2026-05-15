@@ -227,17 +227,19 @@
         /* Toast */
         #toast {
             position: fixed;
-            top: 20px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 22px;
+            transform: translate(-50%, -50%);
+            padding: 14px 28px;
             border-radius: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            font-size: 14px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #1A1A2E;
+            font-size: 15px;
+            font-weight: 600;
             display: none;
-            z-index: 100;
+            z-index: 1000;
             white-space: nowrap;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
 
         #share-banner {
@@ -415,8 +417,13 @@
 
         fileInput.onchange = async (e) => {
             const files = Array.from(e.target.files);
+            console.log('[Upload] files selected:', files.length, 'api:', api, 'sid:', sid, 't:', t, 'url:', window.location.href);
             if (!files.length) return;
-            if (!api || !sid) { showToast('⚠️ 请重新扫码进入'); return; }
+            if (!api || !sid) {
+                showToast('⚠️ 请重新扫码进入（缺少 api/sid）');
+                console.warn('[Upload] Missing api or sid. URL:', window.location.href);
+                return;
+            }
 
             uploadZone.classList.add('uploading');
             uploadZone.onclick = null;
