@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>仓鼠快传 - 移动端</title>
+    <!-- PWA 配置 -->
+    <link rel="manifest" href="/Figma/pwa-manifest.json">
+    <meta name="theme-color" content="#FF8C00">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="仓鼠快传">
     <style>
         :root {
             --bg-color: #f9f9f9;
@@ -337,6 +343,20 @@
             reader.onload = () => resolve(reader.result);
             reader.onerror = error => reject(error);
         });
+    </script>
+
+    <script>
+        // ─── Service Worker 注册（每次进入页面必须执行）─────────────────
+        // 没有这一段，Share Target 永远不会出现在系统分享菜单里
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/Figma/sw.js', { scope: '/Figma/' })
+                .then(reg => {
+                    console.log('[PWA] SW 注册成功', reg.scope);
+                })
+                .catch(err => {
+                    console.error('[PWA] SW 注册失败', err);
+                });
+        }
     </script>
 </body>
 </html>
