@@ -13,7 +13,7 @@
     <style>
         :root {
             --bg: linear-gradient(180deg, #5A85D0 0%, #EDF0FB 51%, #EDF0FB 100%);
-            --card: rgba(255, 255, 255, 0.85);
+            --card: rgba(255, 255, 255, 0.4);
             --purple: #5A85D0;
             --purple-light: #EAEAF8;
             --green: #52C41A;
@@ -60,10 +60,13 @@
 
         .card {
             background: var(--card);
-            border-radius: 20px;
+            border-radius: 40px;
             padding: 16px;
-            margin-bottom: 40px;
-            width: 100%;
+            border: 11px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            margin-bottom: 24px;
         }
 
         .btn-outline {
@@ -95,13 +98,17 @@
 
         /* Upload Zone */
         .upload-zone {
-            border: 1px dashed var(--border);
-            border-radius: 12px;
-            padding: 44px 20px;
+            border: 1px dashed #FFFFFF;
+            border-radius: 20px;
+            padding: 40px 20px;
             text-align: center;
             cursor: pointer;
-            background: #FFFFFF;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
         }
 
         .upload-zone.uploading {
@@ -123,7 +130,7 @@
         }
 
         .upload-default-label {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
             color: var(--text);
         }
@@ -203,7 +210,8 @@
             justify-content: center;
             gap: 8px;
             width: 100%;
-            padding: 16px;
+            height: 44px;
+            padding: 0 16px;
             border-radius: 12px;
             font-size: 15px;
             font-weight: 600;
