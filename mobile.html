@@ -105,10 +105,9 @@
             cursor: pointer;
             transition: all 0.3s ease;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%);
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 12px;
+            justify-content: center;
+            min-height: 180px;
         }
 
         .upload-zone.uploading {
@@ -117,9 +116,9 @@
         }
 
         .upload-icon {
-            width: 40px;
-            height: 40px;
-            margin: 0 auto 16px;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -137,6 +136,8 @@
 
         .upload-progress {
             display: none;
+            width: 100%;
+            max-width: 200px;
         }
 
         .upload-zone.uploading .upload-default-label {
@@ -148,10 +149,11 @@
         }
 
         .progress-label {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
             color: var(--text);
-            margin-bottom: 14px;
+            margin-bottom: 12px;
+            text-align: center;
         }
 
         .progress-bar-bg {
@@ -306,28 +308,38 @@
     <div class="card">
         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
             <div class="upload-icon">
-                <svg width="40" height="40" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect y="2.5" width="80" height="75" rx="20" fill="url(#paint0_linear_819_1266)" />
-                    <path
-                        d="M27.1765 57.1616L45.9888 43.6842C48.6808 41.7556 52.4186 42.3191 54.4223 44.9556L64.2353 57.8675"
-                        stroke="white" stroke-width="5.17647" stroke-linecap="round" />
-                    <circle cx="24.9412" cy="33.1618" r="8.94118" stroke="white" stroke-width="5.17647" />
+                <svg width="80" height="80" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6.66675 43.9999C6.66675 38.1089 11.4424 33.3333 17.3334 33.3333H46.6667H60.0001H101.667C107.558 33.3333 112.333 38.1089 112.333 43.9999V97.3333C112.333 103.224 107.558 108 101.667 108H17.3334C11.4424 108 6.66675 103.224 6.66675 97.3332V43.9999Z" fill="#18B2FF"/>
+                    <path d="M17.3337 27.75H41.4705C44.5198 27.7501 47.3995 29.1534 49.2791 31.5547L59.4099 44.4971L59.6345 44.7852H102.667C108.144 44.7852 112.584 49.2253 112.584 54.7021V97.333C112.584 102.81 108.144 107.25 102.667 107.25H17.3337C11.8569 107.25 7.41675 102.81 7.41675 97.333V37.667C7.41675 32.1902 11.8569 27.75 17.3337 27.75Z" fill="url(#paint0_linear_819_1266)" stroke="url(#paint1_linear_819_1266)" stroke-width="1.5"/>
+                    <foreignObject x="54.7333" y="47.7333" width="85.8666" height="85.8666"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(8.13px);clip-path:url(#bgblur_0_819_1266_clip_path);height:100%;width:100%"></div></foreignObject><circle data-figma-bg-blur-radius="16.2667" cx="97.6667" cy="90.6667" r="25.6667" fill="white" fill-opacity="0.7" stroke="url(#paint2_linear_819_1266)" stroke-width="2"/>
+                    <path d="M111 90L98 77L85 90M98 77V103" stroke="url(#paint3_linear_819_1266)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
                     <defs>
-                        <linearGradient id="paint0_linear_819_1266" x1="40" y1="2.5" x2="40" y2="77.5"
-                            gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#867CFF" />
-                            <stop offset="1" stop-color="#B6AFFF" />
-                        </linearGradient>
+                    <clipPath id="bgblur_0_819_1266_clip_path" transform="translate(-54.7333 -47.7333)"><circle cx="97.6667" cy="90.6667" r="25.6667"/>
+                    </clipPath><linearGradient id="paint0_linear_819_1266" x1="55.3334" y1="23.3333" x2="60.0001" y2="108" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#45DDFF"/>
+                    <stop offset="1" stop-color="#4AA2F7"/>
+                    </linearGradient>
+                    <linearGradient id="paint1_linear_819_1266" x1="60.0001" y1="28" x2="60.0001" y2="108" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#ECFFFA" stop-opacity="0.8"/>
+                    <stop offset="1" stop-color="white" stop-opacity="0"/>
+                    </linearGradient>
+                    <linearGradient id="paint2_linear_819_1266" x1="97.6667" y1="64" x2="97.6667" y2="117.333" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="white"/>
+                    <stop offset="1" stop-color="white" stop-opacity="0"/>
+                    </linearGradient>
+                    <linearGradient id="paint3_linear_819_1266" x1="98" y1="77" x2="98" y2="103" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#0EC5F3"/>
+                    <stop offset="1" stop-color="#0074E2"/>
+                    </linearGradient>
                     </defs>
                 </svg>
             </div>
-            <div class="upload-default-label">点击选择或拍摄截图</div>
+            <div id="uploadLabel" class="upload-default-label">点击选择或拍摄截图</div>
             <div class="upload-progress">
-                <div class="progress-label">正在上传...</div>
+                <div class="progress-label" id="progressLabel">正在上传 0/0</div>
                 <div class="progress-bar-bg">
                     <div class="progress-bar-fill" id="progressFill"></div>
                 </div>
-                <div class="progress-count" id="progressCount"></div>
             </div>
         </div>
         <input type="file" id="fileInput" multiple="multiple" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none">
@@ -442,19 +454,25 @@
                 return;
             }
 
-            // 修改：不再自动上传，而是显示确认按钮或直接开始并强制显示进度
-            uploadZone.classList.add('uploading');
-            uploadZone.onclick = null;
+            const label = document.getElementById('progressLabel');
+            const fill = document.getElementById('progressFill');
             
-            const progressFill = document.getElementById('progressFill');
-            const progressCount = document.getElementById('progressCount');
-            progressFill.style.width = '0%';
-            progressCount.textContent = `0/${files.length}`;
+            uploadZone.classList.add('uploading');
+            uploadZone.onclick = null; // 传输中禁止再次点击
+            
+            let successCount = 0;
+            const total = files.length;
 
-            let ok = 0, failed = 0;
-            for (let i = 0; i < files.length; i++) {
+            const updateUI = (count, isDone = false) => {
+                const text = isDone ? `快传完成 ${count}/${total}` : `正在上传 ${count}/${total}`;
+                label.textContent = text;
+                fill.style.width = `${(count / total) * 100}%`;
+            };
+
+            updateUI(0);
+
+            for (let i = 0; i < total; i++) {
                 try {
-                    showToast(`⏳ 正在传输第 ${i + 1}/${files.length} 张…`, 5000);
                     const base64 = await toBase64(files[i]);
                     const res = await fetch(`${_api}/api/upload?sid=${_sid}&t=${_t}`, {
                         method: 'POST',
@@ -463,27 +481,28 @@
                     });
                     
                     if (res.ok) {
-                        const data = await res.json();
-                        if (data.ok) ok++; else failed++;
-                    } else { failed++; }
+                        successCount++;
+                        updateUI(successCount);
+                    }
                 } catch (err) {
-                    console.error(err);
-                    failed++;
+                    console.error('Upload error:', err);
                 }
-                const pct = Math.round((i + 1) / files.length * 100);
-                progressFill.style.width = pct + '%';
-                progressCount.textContent = `${i + 1}/${files.length}`;
             }
 
-            uploadZone.classList.remove('uploading');
-            uploadZone.onclick = () => fileInput.click();
-            fileInput.value = '';
-
-            if (failed === 0) {
-                showToast(`✅ 成功传输 ${ok} 张图片！`, 3000);
-            } else {
-                showToast(`⚠️ ${ok} 张成功，${failed} 张失败`, 4000);
-            }
+            // 完成状态
+            updateUI(successCount, true);
+            
+            // 3秒后恢复默认
+            setTimeout(() => {
+                uploadZone.classList.remove('uploading');
+                uploadZone.onclick = () => fileInput.click();
+                fileInput.value = '';
+                
+                // 延迟重置进度条，配合 CSS 动画
+                setTimeout(() => {
+                    updateUI(0);
+                }, 300);
+            }, 3000);
         }
 
         const toBase64 = f => new Promise((res, rej) => {
