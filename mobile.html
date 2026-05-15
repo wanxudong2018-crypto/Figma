@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,85 +12,249 @@
     <meta name="apple-mobile-web-app-title" content="仓鼠快传">
     <style>
         :root {
-            --bg: #ECEDF8;
-            --card: #FFFFFF;
+            --bg: #E7E8FF;
+            --card: rgba(255, 255, 255, 0.6);
             --purple: #7B7CE8;
             --purple-light: #EAEAF8;
             --green: #52C41A;
             --text: #1A1A2E;
             --sub: #8888A8;
-            --border: #E2E2F0;
+            --border: #A29BFF;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
             background: var(--bg);
             min-height: 100vh;
-            padding: 52px 20px 40px;
+            padding: 52px 12px 0;
+            display: flex;
+            flex-direction: column;
         }
-        .header { text-align: center; margin-bottom: 24px; }
-        .header h1 { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-        .header p { font-size: 14px; color: var(--sub); }
 
-        .card { background: var(--card); border-radius: 20px; padding: 24px; margin-bottom: 16px; }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--sub);
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 40px;
+            width: 100%;
+        }
+
+        .btn-outline {
+            background: #F5F6F9;
+            border: 1px solid #EBEDF0;
+            color: var(--text);
+        }
+
+        .btn-primary {
+            background: #F5F6F9;
+            border: 1px solid #EBEDF0;
+            color: var(--text);
+        }
+
+        .btn-primary.success {
+            background: var(--green) !important;
+            border-color: var(--green) !important;
+            color: #FFFFFF !important;
+        }
+
+        .full-bleed-card {
+            background: #FFFFFF;
+            border-radius: 24px 24px 0 0;
+            padding: 32px 24px 60px;
+            margin: 0 -12px 0 -12px;
+            width: calc(100% + 24px);
+            flex: 1;
+        }
 
         /* Upload Zone */
         .upload-zone {
             border: 2px dashed var(--border);
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 44px 20px;
             text-align: center;
             cursor: pointer;
-            transition: border-color 0.2s;
+            background: #FFFFFF;
+            transition: all 0.2s;
         }
-        .upload-zone.uploading { border-style: solid; cursor: default; }
-        .upload-icon-wrap {
-            width: 56px; height: 56px;
-            background: var(--purple-light);
-            border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 14px;
+
+        .upload-zone.uploading {
+            border-style: solid;
+            cursor: default;
         }
-        .upload-icon-wrap svg { stroke: var(--purple); }
-        .upload-default-label { font-size: 16px; font-weight: 500; color: var(--text); }
-        .upload-progress { display: none; }
-        .upload-zone.uploading .upload-default-label { display: none; }
-        .upload-zone.uploading .upload-progress { display: block; }
-        .progress-label { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 14px; }
-        .progress-bar-bg { background: var(--border); border-radius: 100px; height: 6px; overflow: hidden; margin-bottom: 6px; }
-        .progress-bar-fill { height: 100%; background: var(--green); border-radius: 100px; width: 0%; transition: width 0.3s ease; }
-        .progress-count { text-align: right; font-size: 13px; color: var(--sub); }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-icon-wrap svg {
+            stroke: var(--purple);
+        }
+
+        .upload-default-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .upload-progress {
+            display: none;
+        }
+
+        .upload-zone.uploading .upload-default-label {
+            display: none;
+        }
+
+        .upload-zone.uploading .upload-progress {
+            display: block;
+        }
+
+        .progress-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 14px;
+        }
+
+        .progress-bar-bg {
+            background: var(--border);
+            border-radius: 100px;
+            height: 6px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--green);
+            border-radius: 100px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-count {
+            text-align: right;
+            font-size: 13px;
+            color: var(--sub);
+        }
 
         /* iOS Setup Card */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .section-title { font-size: 16px; font-weight: 700; color: var(--text); }
-        .section-link { font-size: 13px; color: var(--purple); text-decoration: none; }
-        .step-label { font-size: 13px; color: var(--sub); margin-bottom: 10px; }
-        .step-btn {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            width: 100%; padding: 14px; border-radius: 12px;
-            font-size: 15px; font-weight: 500; cursor: pointer;
-            text-decoration: none; border: 1.5px solid var(--border);
-            background: transparent; color: var(--text); margin-bottom: 16px;
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
-        .step-btn-dark { border-color: var(--text); font-weight: 600; }
-        .step-hint { font-size: 12px; color: var(--sub); line-height: 1.6; margin-top: -8px; display: none; }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .section-link {
+            font-size: 13px;
+            color: var(--purple);
+            text-decoration: none;
+        }
+
+        .step-label {
+            font-size: 13px;
+            color: var(--sub);
+            margin-bottom: 10px;
+        }
+
+        .step-hint { font-size: 12px; color: var(--sub); line-height: 1.6; margin-top: -8px; }
+
+        .step-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: 1px solid #EBEDF0;
+            background: #F5F6F9;
+            color: var(--text);
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .step-btn-dark {
+            /* Same as step-btn now based on user feedback */
+        }
+
+        .step-btn.success {
+            background: var(--green) !important;
+            border-color: var(--green) !important;
+            color: #FFFFFF !important;
+        }
 
         /* Toast */
         #toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 10px 22px; border-radius: 20px;
-            background: rgba(0,0,0,0.8); color: white;
-            font-size: 14px; display: none; z-index: 100; white-space: nowrap;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 22px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 14px;
+            display: none;
+            z-index: 100;
+            white-space: nowrap;
         }
+
         #share-banner {
-            display: none; position: fixed; top: 0; left: 0; right: 0;
-            padding: 20px 24px 16px; text-align: center;
-            font-size: 16px; font-weight: 600; z-index: 200;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 24px 16px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 200;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
+
 <body>
     <div id="toast"></div>
     <div id="share-banner"></div>
@@ -102,17 +267,28 @@
     <!-- 上传卡片 -->
     <div class="card">
         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-            <div class="upload-icon-wrap">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="3"/>
-                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                    <polyline points="21 15 16 10 5 21"/>
+            <div class="upload-icon">
+                <svg width="48" height="48" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect y="2.5" width="80" height="75" rx="20" fill="url(#paint0_linear_819_1266)" />
+                    <path
+                        d="M27.1765 57.1616L45.9888 43.6842C48.6808 41.7556 52.4186 42.3191 54.4223 44.9556L64.2353 57.8675"
+                        stroke="white" stroke-width="5.17647" stroke-linecap="round" />
+                    <circle cx="24.9412" cy="33.1618" r="8.94118" stroke="white" stroke-width="5.17647" />
+                    <defs>
+                        <linearGradient id="paint0_linear_819_1266" x1="40" y1="2.5" x2="40" y2="77.5"
+                            gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#867CFF" />
+                            <stop offset="1" stop-color="#B6AFFF" />
+                        </linearGradient>
+                    </defs>
                 </svg>
             </div>
             <div class="upload-default-label">点击选择或拍摄截图</div>
             <div class="upload-progress">
                 <div class="progress-label">正在上传...</div>
-                <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progressFill"></div>
+                </div>
                 <div class="progress-count" id="progressCount"></div>
             </div>
         </div>
@@ -120,30 +296,28 @@
     </div>
 
     <!-- iOS 设置卡片 -->
-    <div class="card">
+    <div class="full-bleed-card">
         <div class="section-header">
             <span class="section-title">iOS 端原生分享设置方案</span>
             <a href="#" class="section-link">视频引导</a>
         </div>
 
         <div class="step-label">1、下载 iOS 快捷指令</div>
-        <a id="btnShortcut" href="https://www.icloud.com/shortcuts/84eec593c0644fc782897a80c66340a3"
-           target="_blank" class="step-btn">
+        <a id="btnShortcut" href="https://www.icloud.com/shortcuts/84eec593c0644fc782897a80c66340a3" target="_blank"
+            class="step-btn">
             <svg width="16" height="16" viewBox="0 0 814 1000" fill="currentColor">
-                <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-103.5c-43.7-58.3-99-155.4-99-252.5 0-184.7 120.2-282.2 238.4-282.2 63.1 0 115.5 41.6 155 41.6 37.8 0 97.5-44.4 168.7-44.4 27.3 0 109.9 4 167 75.4zm-234.7-90.5c31.6-37.9 54.3-90.5 54.3-143.1 0-7.3-.6-14.7-1.9-20.7-51.6 1.9-112.3 34.8-149.2 75.7-28.5 32.4-55.1 84.9-55.1 138.2 0 8.3 1.3 16.6 1.9 19.2 3.2.6 8.4 1.3 13.6 1.3 46.5 0 102.5-31.6 136.4-70.6z"/>
+                <path
+                    d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-103.5c-43.7-58.3-99-155.4-99-252.5 0-184.7 120.2-282.2 238.4-282.2 63.1 0 115.5 41.6 155 41.6 37.8 0 97.5-44.4 168.7-44.4 27.3 0 109.9 4 167 75.4zm-234.7-90.5c31.6-37.9 54.3-90.5 54.3-143.1 0-7.3-.6-14.7-1.9-20.7-51.6 1.9-112.3 34.8-149.2 75.7-28.5 32.4-55.1 84.9-55.1 138.2 0 8.3 1.3 16.6 1.9 19.2 3.2.6 8.4 1.3 13.6 1.3 46.5 0 102.5-31.6 136.4-70.6z" />
             </svg>
             下载 iOS 快捷指令
         </a>
 
         <div class="step-label">2、配置快捷指令专属链接</div>
         <button id="copyBtn" class="step-btn step-btn-dark" onclick="copyUploadUrl()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
             复制专属链接
         </button>
-        <div class="step-hint" id="copyHint">
+        <div class="step-hint">
             复制专属链接 → 打开「发送到 figma」快捷指令 → 粘贴到顶部文字框中
         </div>
     </div>
@@ -262,4 +436,5 @@
         }
     </script>
 </body>
+
 </html>
