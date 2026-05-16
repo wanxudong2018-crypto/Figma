@@ -347,12 +347,6 @@
         }
 
         // --- 4. 上传逻辑 ---
-        uploadZone.addEventListener('click', () => {
-            if (!uploadZone.classList.contains('uploading')) {
-                fileInput.click();
-            }
-        });
-
         fileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
