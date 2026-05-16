@@ -420,7 +420,7 @@
                 showToast('⚠️ 请通过插件扫码进入');
                 return;
             }
-            const url = `${config.api}/upload?sid=${config.sid}&t=${config.t}`;
+            const url = `${config.api}/api/upload?sid=${config.sid}&t=${config.t}`;
             navigator.clipboard.writeText(url).then(() => showToast('✅ 已复制快捷指令链接'));
         }
     </script>
