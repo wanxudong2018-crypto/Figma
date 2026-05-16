@@ -2,7 +2,7 @@
   "name": "仓鼠快传",
   "short_name": "仓鼠快传",
   "description": "手机截图一键发送到 Figma 画布",
-  "start_url": "/Figma/mobile.html",
+  "start_url": "/Figma/mobile-figma.html",
   "scope": "/Figma/",
   "display": "standalone",
   "background_color": "#0a0a0b",

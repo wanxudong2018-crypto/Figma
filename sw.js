@@ -40,7 +40,7 @@ async function idbSet(key, value) {
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(clients.claim()));
 
-// ─── 接收来自 mobile.html 的凭证存储消息 ─────────────────────────────────────
+// ─── 接收来自 mobile-figma.html 的凭证存储消息 ─────────────────────────────────────
 
 self.addEventListener('message', async (event) => {
   if (event.data && event.data.type === 'STORE_CREDENTIALS') {
@@ -57,7 +57,7 @@ self.addEventListener('message', async (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  if (event.request.method === 'POST' && url.pathname.includes('mobile.html')) {
+  if (event.request.method === 'POST' && url.pathname.includes('mobile-figma.html')) {
     event.respondWith(handleShareTarget(event.request));
   }
 });
@@ -68,7 +68,7 @@ async function handleShareTarget(request) {
     const mediaFiles = formData.getAll('media');
 
     if (!mediaFiles || mediaFiles.length === 0) {
-      return Response.redirect('/Figma/mobile.html?shared=1&error=no_file', 303);
+      return Response.redirect('/Figma/mobile-figma.html?shared=1&error=no_file', 303);
     }
 
     // 读取存储的凭证
@@ -77,7 +77,7 @@ async function handleShareTarget(request) {
       // 没有凭证：缓存图片，引导用户扫码配置
       const cache = await caches.open('shared-files');
       await cache.put('/shared-media', new Response(mediaFiles[0]));
-      return Response.redirect('/Figma/mobile.html?shared=1&error=no_creds', 303);
+      return Response.redirect('/Figma/mobile-figma.html?shared=1&error=no_creds', 303);
     }
 
     // 逐张上传到云端
@@ -110,19 +110,19 @@ async function handleShareTarget(request) {
 
     if (uploadedCount > 0) {
       return Response.redirect(
-        `/Figma/mobile.html?shared=1&count=${uploadedCount}&total=${mediaFiles.length}`,
+        `/Figma/mobile-figma.html?shared=1&count=${uploadedCount}&total=${mediaFiles.length}`,
         303
       );
     } else {
       return Response.redirect(
-        `/Figma/mobile.html?shared=1&error=${lastError}`,
+        `/Figma/mobile-figma.html?shared=1&error=${lastError}`,
         303
       );
     }
 
   } catch (e) {
     console.error('[SW] Share Target Error:', e);
-    return Response.redirect('/Figma/mobile.html?shared=1&error=sw_error', 303);
+    return Response.redirect('/Figma/mobile-figma.html?shared=1&error=sw_error', 303);
   }
 }
 
