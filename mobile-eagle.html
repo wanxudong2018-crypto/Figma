@@ -435,9 +435,8 @@
                 const result = await response.json();
                 if (result.ok && result.quotaExceeded) {
                     isQuotaExceeded = true;
-                    uploadLabel.textContent = '今日免费额度已用完，请激活专业版';
+                    uploadLabel.innerHTML = '今日免费额度已用完，<a href="https://afdian.net/a/wanonedesign" target="_blank" onclick="event.stopPropagation()" style="color: var(--purple); text-decoration: none; font-weight: 600;">请激活专业版</a>';
                     uploadLabel.style.color = 'var(--text)';
-                    uploadZone.style.opacity = '0.6';
                 }
             } catch(e) {}
         }
