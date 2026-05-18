@@ -291,7 +291,7 @@
             <div class="modal-body" id="errorModalMsg">上传失败</div>
             <div class="modal-actions">
                 <button class="modal-btn-cancel" onclick="document.getElementById('errorModal').style.display='none'">关闭</button>
-                <a class="modal-btn-primary" id="errorModalAction" href="https://afdian.net/a/wanonedesign" target="_blank" style="display: none;">购买会员</a>
+                <a class="modal-btn-primary" id="errorModalAction" href="https://www.ifdian.net/item/9e5ce82c4ea411f19fd852540025c377?utm_source=copylink&utm_medium=link" target="_blank" style="display: none;">购买会员</a>
             </div>
         </div>
     </div>
@@ -437,7 +437,7 @@
                 const result = await response.json();
                 if (result.ok && result.quotaExceeded) {
                     isQuotaExceeded = true;
-                    uploadLabel.innerHTML = '今日免费额度已用完，<a href="https://afdian.net/a/wanonedesign" target="_blank" onclick="event.stopPropagation()" style="color: var(--purple); text-decoration: none; font-weight: 600;">请激活专业版</a>';
+                    uploadLabel.innerHTML = '今日免费额度已用完，<a href="https://www.ifdian.net/item/9e5ce82c4ea411f19fd852540025c377?utm_source=copylink&utm_medium=link" target="_blank" onclick="event.stopPropagation()" style="color: var(--purple); text-decoration: none; font-weight: 600;">请激活专业版</a>';
                     uploadLabel.style.color = 'var(--text)';
                 }
             } catch(e) {}
