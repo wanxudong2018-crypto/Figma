@@ -323,7 +323,7 @@
 
     <!-- 上传卡片 -->
     <div class="card">
-        <div class="upload-zone" id="uploadZone" onclick="if(!this.classList.contains('uploading')) document.getElementById('fileInput').click()">
+        <div class="upload-zone" id="uploadZone">
             <div class="upload-icon">
                 <svg width="80" height="80" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6.66675 35.9999C6.66675 30.1089 11.4424 25.3333 17.3334 25.3333H46.6667H60.0001H101.667C107.558 25.3333 112.333 30.1089 112.333 35.9999V89.3333C112.333 95.2243 107.558 99.9999 101.667 99.9999H17.3334C11.4424 99.9999 6.66675 95.2243 6.66675 89.3332V35.9999Z" fill="#0099D1"/>
@@ -424,7 +424,36 @@
             uploadZone.style.pointerEvents = 'none';
         } else {
             if (copyHint) copyHint.style.display = 'block';
+            checkInitialQuota();
         }
+
+        // --- 3.5 前置额度检查与拦截 ---
+        let isQuotaExceeded = false;
+        async function checkInitialQuota() {
+            try {
+                const response = await fetch(`${config.api}/api/check-quota?sid=${config.sid}&t=${config.t}`);
+                const result = await response.json();
+                if (result.ok && result.quotaExceeded) {
+                    isQuotaExceeded = true;
+                    uploadLabel.textContent = '今日免费额度已用完，请激活专业版';
+                    uploadLabel.style.color = 'var(--text)';
+                    uploadZone.style.opacity = '0.6';
+                }
+            } catch(e) {}
+        }
+
+        uploadZone.addEventListener('click', (e) => {
+            if (uploadZone.classList.contains('uploading')) return;
+            
+            if (isQuotaExceeded) {
+                document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活专业版';
+                document.getElementById('errorModalAction').style.display = 'inline-flex';
+                document.getElementById('errorModal').style.display = 'flex';
+                return;
+            }
+            
+            fileInput.click();
+        });
 
         // --- 4. 上传逻辑 ---
         fileInput.addEventListener('change', async (e) => {
