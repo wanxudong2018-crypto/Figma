@@ -195,7 +195,29 @@
             border: none;
         }
 
-        /* Toast */
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
+            z-index: 1000; display: none; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            width: 85%; max-width: 320px; text-align: center;
+            border-radius: 20px; padding: 24px;
+        }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text-color); }
+        .modal-body { font-size: 14px; color: var(--text-color); opacity: 0.8; margin-bottom: 24px; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 12px; }
+        .modal-btn-cancel {
+            flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 500;
+            background: rgba(150, 150, 150, 0.15); color: var(--text-color); cursor: pointer;
+        }
+        .modal-btn-primary {
+            flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 500;
+            background: var(--accent-color); color: white; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+
         #toast {
             position: fixed;
             top: 50%;
@@ -218,12 +240,22 @@
 <body>
     <div id="toast"></div>
 
+    <!-- 模态框 (Modal) -->
+    <div id="errorModal" class="modal-overlay">
+        <div class="glass-card modal-content">
+            <div class="modal-title">提示</div>
+            <div class="modal-body" id="errorModalMsg">上传失败</div>
+            <div class="modal-actions">
+                <button class="modal-btn-cancel" onclick="document.getElementById('errorModal').style.display='none'">关闭</button>
+                <a class="modal-btn-primary" id="errorModalAction" href="https://afdian.net/a/wanonedesign" target="_blank" style="display: none;">购买会员</a>
+            </div>
+        </div>
+    </div>
+
     <div class="header">
         <div class="logo">
-            <!-- 尺寸等比缩小 50% (170.5x54) -->
             <svg width="170.5" height="54" viewBox="0 0 341 108" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin:0 auto">
                 <path d="M45.9382 103.751C40.0006 110.939 27.5004 107.502 21.8753 104.376C24.2712 102.71 29.3754 98.7514 37.813 98.7514C33.813 93.5013 34.063 85.8346 34.688 82.8137C39.0631 85.0012 48.7507 93.1263 45.9382 103.751Z" fill="#FFE19C"/>
-                <path d="M29.3754 95.3139C21.8753 100.814 12.9169 94.6889 9.37513 90.9388C11.146 90.1055 16.5627 88.6888 24.0628 89.6888C22.5628 84.4387 23.4378 77.9178 24.0628 75.3136C28.9587 79.6886 34.063 87.5013 29.3754 95.3139Z" fill="#FFE19C"/>
                 <path d="M18.1253 83.4387C10.6252 85.1887 3.95839 78.8553 1.87503 75.3136C3.75005 75.0011 9.37513 75.3136 14.6877 77.1886C14.6877 70.9385 16.7711 66.6676 18.1253 65.3134C21.2503 67.8135 24.6879 78.4386 18.1253 83.4387Z" fill="#FFE19C"/>
                 <path d="M11.5627 67.8135C3.43755 67.8135 0.520841 59.8967 0 55.6258C2.39587 56.1466 7.81261 57.6258 10.3126 60.6259C11.0627 56.6258 15.4169 53.2299 17.5002 51.8757C18.8544 57.1883 19.0628 65.0009 11.5627 67.8135Z" fill="#FFE19C"/>
                 <path d="M9.68762 52.8133C0.937497 50.3132 0.416656 41.7714 1.25 37.813C5.00006 38.438 8.1251 41.8756 10.0001 45.9382C12.7502 41.4982 17.1877 39.2964 19.0628 38.7506C18.9586 42.1881 16.9377 49.8132 9.68762 52.8133Z" fill="#FFE19C"/>
@@ -373,13 +405,27 @@
                     });
 
                     const result = await response.json();
-                    if (!result.ok) throw new Error(result.error || '上传失败');
+                    if (!result.ok) {
+                        const err = new Error(result.error || '上传失败');
+                        err.code = result.errorCode;
+                        throw err;
+                    }
 
                     const percent = Math.round(((i + 1) / files.length) * 100);
                     progressFill.style.width = `${percent}%`;
 
                 } catch (err) {
-                    alert(`第 ${i + 1} 张图片上传失败: ${err.message}`);
+                    const msg = err.message || '上传失败';
+                    const btn = document.getElementById('errorModalAction');
+                    if (err.code === 'QUOTA_EXCEEDED') {
+                        document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活专业版';
+                        btn.style.display = 'inline-flex';
+                    } else {
+                        document.getElementById('errorModalMsg').textContent = `第 ${i + 1} 张图片上传失败: ${msg}`;
+                        btn.style.display = 'none';
+                    }
+                    document.getElementById('errorModal').style.display = 'flex';
+                    break; // 出错即刻跳出循环，不再重复提示和请求
                 }
             }
 
