@@ -239,6 +239,35 @@
             color: #FFFFFF !important;
         }
 
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
+            z-index: 1000; display: none; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            width: 85%; max-width: 320px; text-align: center;
+            border-radius: 20px; padding: 24px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(200, 200, 200, 0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        @media (prefers-color-scheme: dark) {
+            .modal-content { background: rgba(40, 40, 40, 0.95); border-color: rgba(255, 255, 255, 0.1); }
+        }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+        .modal-body { font-size: 14px; color: var(--text); opacity: 0.8; margin-bottom: 24px; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 12px; }
+        .modal-btn-cancel {
+            flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 500;
+            background: rgba(150, 150, 150, 0.15); color: var(--text); cursor: pointer;
+        }
+        .modal-btn-primary {
+            flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 500;
+            background: var(--purple); color: white; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+
         /* Toast */
         #toast {
             position: fixed;
@@ -276,6 +305,18 @@
 <body>
     <div id="toast"></div>
     <div id="share-banner"></div>
+
+    <!-- 模态框 (Modal) -->
+    <div id="errorModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title">提示</div>
+            <div class="modal-body" id="errorModalMsg">上传失败</div>
+            <div class="modal-actions">
+                <button class="modal-btn-cancel" onclick="document.getElementById('errorModal').style.display='none'">关闭</button>
+                <a class="modal-btn-primary" id="errorModalAction" href="https://afdian.net/a/wanonedesign" target="_blank" style="display: none;">购买会员</a>
+            </div>
+        </div>
+    </div>
 
     <div class="header">
         <div class="logo">
@@ -490,12 +531,27 @@
                         body: JSON.stringify({ image: base64, filename: files[i].name, id: fileId })
                     });
                     
-                    if (res.ok) {
-                        successCount++;
-                        updateUI(successCount);
+                    const result = await res.json();
+                    if (!result.ok) {
+                        const err = new Error(result.error || '上传失败');
+                        err.code = result.errorCode;
+                        throw err;
                     }
+
+                    successCount++;
+                    updateUI(successCount);
                 } catch (err) {
-                    console.error('Upload error:', err);
+                    const msg = err.message || '上传失败';
+                    const btn = document.getElementById('errorModalAction');
+                    if (err.code === 'QUOTA_EXCEEDED') {
+                        document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活专业版';
+                        btn.style.display = 'inline-flex';
+                    } else {
+                        document.getElementById('errorModalMsg').textContent = `第 ${i + 1} 张图片上传失败: ${msg}`;
+                        btn.style.display = 'none';
+                    }
+                    document.getElementById('errorModal').style.display = 'flex';
+                    break; // 出错即刻跳出循环
                 }
             }
 
