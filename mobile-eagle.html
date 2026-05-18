@@ -119,6 +119,48 @@
             display: block;
         }
 
+        /* 原图选项样式 */
+        .upload-original-container {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .original-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text);
+            opacity: 0.85;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.25);
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 500;
+        }
+
+        .original-label:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .original-label input {
+            cursor: pointer;
+            width: 15px;
+            height: 15px;
+            accent-color: var(--purple);
+            margin: 0;
+        }
+
+        .upload-zone.uploading .upload-original-container {
+            display: none;
+        }
+
         .progress-label {
             font-size: 14px;
             font-weight: 500;
@@ -318,6 +360,12 @@
                 </svg>
             </div>
             <div id="uploadLabel" class="upload-default-label">点击选择或拍摄截图</div>
+            <div class="upload-original-container" onclick="event.stopPropagation()">
+                <label class="original-label">
+                    <input type="checkbox" id="originalCheckbox">
+                    <span>上传原图 (关闭则自动极速压缩)</span>
+                </label>
+            </div>
             <div class="upload-progress">
                 <div class="progress-label" id="progressLabel">正在上传 0/0</div>
                 <div class="progress-bar-bg">
@@ -390,7 +438,13 @@
                 const file = files[i];
                 try {
                     progressLabel.textContent = `正在上传 ${i + 1}/${files.length}`;
-                    const base64 = await compressImage(file, 0.85);
+                    const isOriginal = document.getElementById('originalCheckbox').checked;
+                    let base64;
+                    if (isOriginal) {
+                        base64 = await fileToBase64(file);
+                    } else {
+                        base64 = await compressImage(file, 0.85);
+                    }
                     const fileId = `img_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
                     
                     const response = await fetch(`${config.api}/api/upload`, {
@@ -455,14 +509,33 @@
                     img.onload = () => {
                         try {
                             const canvas = document.createElement('canvas');
-                            canvas.width = img.naturalWidth || img.width;
-                            canvas.height = img.naturalHeight || img.height;
+                            let w = img.naturalWidth || img.width;
+                            let h = img.naturalHeight || img.height;
+                            
+                            // 限制最大边长为 2048 像素 (移动端阅读与 Eagle 收集的黄金尺寸)
+                            const maxBound = 2048;
+                            if (w > maxBound || h > maxBound) {
+                                if (w > h) {
+                                    h = Math.round(h * maxBound / w);
+                                    w = maxBound;
+                                } else {
+                                    w = Math.round(w * maxBound / h);
+                                    h = maxBound;
+                                }
+                            }
+                            
+                            canvas.width = w;
+                            canvas.height = h;
                             
                             const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            // 填充白色背景底色，防止带透明度的 PNG 截图或素材转 JPEG 时产生黑色难看背景
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.fillRect(0, 0, w, h);
                             
-                            // 保持原始格式，质量设为 85%
-                            const compressedDataUrl = canvas.toDataURL(file.type, quality);
+                            ctx.drawImage(img, 0, 0, w, h);
+                            
+                            // 统一强行输出为 image/jpeg 以获得极其出色的压缩率 (特别针对 iOS/Android 巨大 PNG 截图)
+                            const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
                             resolve(compressedDataUrl);
                         } catch (err) {
                             // 发生任何异常直接降级使用原始 Base64
