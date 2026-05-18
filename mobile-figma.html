@@ -483,10 +483,11 @@
             for (let i = 0; i < total; i++) {
                 try {
                     const base64 = await toBase64(files[i]);
+                    const fileId = `img_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
                     const res = await fetch(`${_api}/api/upload?sid=${_sid}&t=${_t}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image: base64, filename: files[i].name })
+                        body: JSON.stringify({ image: base64, filename: files[i].name, id: fileId })
                     });
                     
                     if (res.ok) {
