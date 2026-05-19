@@ -33,6 +33,7 @@
             background: var(--bg);
             background-attachment: fixed;
             min-height: 100vh;
+            min-height: 100dvh;
             padding: 40px 16px 0;
             display: flex;
             flex-direction: column;
@@ -414,6 +415,10 @@
         } else {
             if (copyHint) copyHint.style.display = 'block';
             checkInitialQuota();
+            // 解决移动端浏览器在动态加载/展开底部文案后自动滚动到底部的问题，强行重置滚动条到顶部
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+            }, 50);
         }
 
         // --- 3.5 前置额度检查与拦截 ---
