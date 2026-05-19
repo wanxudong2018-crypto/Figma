@@ -429,7 +429,7 @@
                 const result = await response.json();
                 if (result.ok && result.quotaExceeded) {
                     isQuotaExceeded = true;
-                    uploadLabel.innerHTML = '今日免费额度已用完，<a href="https://www.ifdian.net/item/9e5ce82c4ea411f19fd852540025c377?utm_source=copylink&utm_medium=link" target="_blank" onclick="event.stopPropagation()" style="color: var(--purple); text-decoration: none; font-weight: 600;">请激活专业版</a>';
+                    uploadLabel.innerHTML = '今日免费额度已用完，<a href="https://www.ifdian.net/item/9e5ce82c4ea411f19fd852540025c377?utm_source=copylink&utm_medium=link" target="_blank" onclick="event.stopPropagation()" style="color: var(--purple); text-decoration: none; font-weight: 600;">请激活永久会员</a>';
                     uploadLabel.style.color = 'var(--text)';
                 }
             } catch(e) {}
@@ -439,7 +439,7 @@
             if (uploadZone.classList.contains('uploading')) return;
             
             if (isQuotaExceeded) {
-                document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活专业版';
+                document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活永久会员';
                 document.getElementById('errorModalAction').style.display = 'inline-flex';
                 document.getElementById('errorModal').style.display = 'flex';
                 return;
@@ -494,7 +494,7 @@
                     const msg = err.message || '上传失败';
                     const btn = document.getElementById('errorModalAction');
                     if (err.code === 'QUOTA_EXCEEDED') {
-                        document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活专业版';
+                        document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活永久会员';
                         btn.style.display = 'inline-flex';
                     } else {
                         document.getElementById('errorModalMsg').textContent = `第 ${i + 1} 张图片上传失败: ${msg}`;
