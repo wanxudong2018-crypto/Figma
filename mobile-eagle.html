@@ -512,6 +512,9 @@
                 progressFill.style.width = '0%';
                 uploadLabel.textContent = '点击选择或拍摄截图';
                 fileInput.value = '';
+                
+                // 💡 核心优化：每次批量上传完成后立即重查配额，一旦满额秒级刷新UI，杜绝视觉和操作滞后！
+                checkInitialQuota();
             }, 2000);
         });
 
