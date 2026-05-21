@@ -349,7 +349,7 @@
 </defs>
                 </svg>
             </div>
-            <div id="uploadLabel" class="upload-default-label">点击选择或拍摄图片</div>
+            <div id="uploadLabel" class="upload-default-label">点击选择或拍摄图片/视频</div>
             <div class="upload-original-container" onclick="event.stopPropagation()">
                 <label class="original-label">
                     <input type="checkbox" id="originalCheckbox">
@@ -363,7 +363,7 @@
                 </div>
             </div>
         </div>
-        <input type="file" id="fileInput" multiple="multiple" accept="image/*" style="display:none">
+        <input type="file" id="fileInput" multiple="multiple" accept="image/*,video/*" style="display:none">
     </div>
 
     <!-- iOS 设置卡片 -->
@@ -510,7 +510,7 @@
                 uploadZone.classList.remove('uploading');
                 progressContainer.style.display = 'none';
                 progressFill.style.width = '0%';
-                uploadLabel.textContent = '点击选择或拍摄截图';
+                uploadLabel.textContent = '点击选择或拍摄图片/视频';
                 fileInput.value = '';
                 
                 // 💡 核心优化：每次批量上传完成后立即重查配额，一旦满额秒级刷新UI，杜绝视觉和操作滞后！
