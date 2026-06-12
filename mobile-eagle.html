@@ -255,16 +255,30 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
             z-index: 1000; display: none; align-items: center; justify-content: center;
+            padding: 16px;
         }
         .modal-content {
-            width: 85%; max-width: 320px; text-align: center;
+            width: 100%; max-width: 360px; max-height: 82dvh; text-align: center;
             border-radius: 24px; padding: 24px;
             background: #FFFFFF;
             box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
         }
         .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
-        .modal-body { font-size: 14px; color: var(--text); opacity: 0.85; margin-bottom: 24px; line-height: 1.5; }
-        .modal-actions { display: flex; gap: 12px; }
+        .modal-body {
+            font-size: 14px;
+            color: var(--text);
+            opacity: 0.85;
+            margin-bottom: 24px;
+            line-height: 1.5;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            -webkit-overflow-scrolling: touch;
+        }
+        .modal-actions { display: flex; gap: 12px; flex-shrink: 0; }
         .modal-btn-cancel {
             flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 15px; font-weight: 500;
             background: rgba(0, 0, 0, 0.06); color: var(--text); cursor: pointer;
