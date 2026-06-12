@@ -462,6 +462,8 @@
         let isQuotaExceeded = false;
         let isPremium = false;
         let allowOriginal = false;
+        let remainingQuota = 5;
+        let freeLimit = 5;
 
         function updateOriginalOption() {
             if (!originalContainer || !originalCheckbox) return;
@@ -489,6 +491,8 @@
                 isPremium = result.isPremium === true;
                 allowOriginal = result.allowOriginal === true;
                 isQuotaExceeded = result.quotaExceeded === true;
+                freeLimit = Number.isFinite(Number(result.freeLimit)) ? Number(result.freeLimit) : 5;
+                remainingQuota = isPremium ? Number.MAX_SAFE_INTEGER : Math.max(0, Number(result.remaining ?? freeLimit));
                 updateOriginalOption();
 
                 if (isQuotaExceeded) {
@@ -526,6 +530,15 @@
             await checkInitialQuota();
             if (isQuotaExceeded) {
                 document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活永久会员';
+                document.getElementById('errorModalAction').style.display = 'inline-flex';
+                document.getElementById('errorModal').style.display = 'flex';
+                fileInput.value = '';
+                return;
+            }
+
+            if (!isPremium && files.length > remainingQuota) {
+                const overCount = files.length - remainingQuota;
+                document.getElementById('errorModalMsg').textContent = `今日免费额度剩余 ${remainingQuota} 张，你选择了 ${files.length} 张，还有 ${overCount} 张无法上传。请减少选择数量或激活永久会员。`;
                 document.getElementById('errorModalAction').style.display = 'inline-flex';
                 document.getElementById('errorModal').style.display = 'flex';
                 fileInput.value = '';
