@@ -590,7 +590,9 @@
                         err.code = result.errorCode;
                         throw err;
                     }
-                    const savedCount = Array.isArray(result.ids) ? result.ids.length : Number(result.savedCount || 0);
+                    const savedCount = Array.isArray(result.ids)
+                        ? result.ids.length
+                        : (Number.isFinite(Number(result.savedCount)) ? Number(result.savedCount) : 1);
                     if (savedCount < 1) {
                         throw new Error('云端未确认保存图片');
                     }
