@@ -395,7 +395,7 @@
 
     <script>
         // --- 1. 参数与配置 ---
-        const MOBILE_PAGE_VERSION = '20260612-debug-summary-v2';
+        const MOBILE_PAGE_VERSION = '20260612-debug-trace-v3';
         const urlParams = new URLSearchParams(window.location.search);
         const config = {
             api: urlParams.get('api') || window.location.origin,
@@ -552,27 +552,43 @@
             let stoppedByError = false;
             const uploadResults = [];
             const selectedCount = files.length;
+            const debugSteps = files.map((file, index) => ({
+                index: index + 1,
+                name: file.name || `第 ${index + 1} 张`,
+                type: file.type || 'unknown',
+                sizeKB: Math.round((file.size || 0) / 1024),
+                steps: ['selected']
+            }));
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
+                const debugItem = debugSteps[i];
                 try {
                     // 网页直传视频大小限制为 25MB，防止过大视频消耗海量云端流量与手机流量
                     if (file.type.startsWith('video/') && file.size > 25 * 1024 * 1024) {
+                        debugItem.steps.push('video-too-large');
                         throw new Error('VIDEO_TOO_LARGE');
                     }
 
                     progressLabel.textContent = `正在上传 ${i + 1}/${files.length}`;
                     const isOriginal = allowOriginal && originalCheckbox && originalCheckbox.checked;
                     if (originalCheckbox && originalCheckbox.checked && !isPremium) {
+                        debugItem.steps.push('original-blocked');
                         throw new Error('ORIGINAL_REQUIRES_PREMIUM');
                     }
+                    debugItem.steps.push(isOriginal ? 'read-original-start' : 'compress-start');
                     let base64;
                     if (isOriginal) {
                         base64 = await fileToBase64(file);
                     } else {
                         base64 = await compressImage(file, 0.85);
                     }
+                    debugItem.steps.push(isOriginal ? 'read-original-ok' : 'compress-ok');
+                    debugItem.outputPrefix = typeof base64 === 'string' ? base64.slice(0, 30) : 'non-string';
+                    debugItem.outputKB = Math.round((String(base64 || '').length * 0.75) / 1024);
                     const fileId = createFileId();
+                    debugItem.fileId = fileId;
+                    debugItem.steps.push('fetch-start');
                     
                     const response = await fetch(buildApiUrl('/api/upload'), {
                         method: 'POST',
@@ -588,6 +604,10 @@
                     });
 
                     const result = await response.json();
+                    debugItem.httpStatus = response.status;
+                    debugItem.responseOk = result.ok === true;
+                    debugItem.responseIds = Array.isArray(result.ids) ? result.ids : [];
+                    debugItem.steps.push('fetch-response');
                     if (!result.ok) {
                         const err = new Error(result.error || '上传失败');
                         err.code = result.errorCode;
@@ -609,11 +629,14 @@
                         name: file.name || `第 ${i + 1} 张`,
                         ids: Array.isArray(result.ids) ? result.ids : []
                     });
+                    debugItem.steps.push('done');
                     progressLabel.textContent = `云端已保存 ${successCount}/${files.length}`;
 
                 } catch (err) {
                     stoppedByError = true;
                     const msg = err.message || '上传失败';
+                    debugItem.error = msg;
+                    debugItem.steps.push('error');
                     const btn = document.getElementById('errorModalAction');
                     let shouldStop = false;
                     if (err.code === 'QUOTA_EXCEEDED') {
@@ -660,7 +683,12 @@
                 ? failedItems.slice(0, 4).map(item => `第 ${item.index} 张：${item.error}`).join('；')
                 : '无';
             const btn = document.getElementById('errorModalAction');
-            document.getElementById('errorModalMsg').textContent = `上传汇总：选择 ${selectedCount} 张，云端确认 ${successCount} 张，未完成 ${missingCount} 张。成功：${successDetail}。失败：${failedDetail}。版本：${MOBILE_PAGE_VERSION}`;
+            const debugDetail = debugSteps.map(item => {
+                const suffix = item.responseIds && item.responseIds.length ? ` id:${item.responseIds[0].slice(-6)}` : '';
+                const error = item.error ? ` err:${item.error}` : '';
+                return `第${item.index}张 ${item.type} ${item.sizeKB}KB [${item.steps.join('>')}]${suffix}${error}`;
+            }).join('；');
+            document.getElementById('errorModalMsg').textContent = `上传汇总：选择 ${selectedCount} 张，云端确认 ${successCount} 张，未完成 ${missingCount} 张。成功：${successDetail}。失败：${failedDetail}。版本：${MOBILE_PAGE_VERSION}。调试：${debugDetail}`;
             btn.style.display = 'none';
             document.getElementById('errorModal').style.display = 'flex';
             setTimeout(() => {
