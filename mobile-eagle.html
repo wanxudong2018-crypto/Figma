@@ -395,6 +395,7 @@
 
     <script>
         // --- 1. 参数与配置 ---
+        const MOBILE_PAGE_VERSION = '20260612-debug-summary-v2';
         const urlParams = new URLSearchParams(window.location.search);
         const config = {
             api: urlParams.get('api') || window.location.origin,
@@ -649,17 +650,19 @@
                 progressLabel.textContent = '上传未完成';
             }
 
-            if (successCount < selectedCount) {
-                const failedItems = uploadResults.filter(item => !item.ok);
-                const missingCount = selectedCount - successCount;
-                const detail = failedItems.length
-                    ? failedItems.slice(0, 4).map(item => `第 ${item.index} 张：${item.error}`).join('；')
-                    : '有图片未获得云端保存确认，请稍后重试。';
-                const btn = document.getElementById('errorModalAction');
-                document.getElementById('errorModalMsg').textContent = `本次选择 ${selectedCount} 张，云端确认保存 ${successCount} 张，还有 ${missingCount} 张未完成。${detail}`;
-                btn.style.display = 'none';
-                document.getElementById('errorModal').style.display = 'flex';
-            }
+            const failedItems = uploadResults.filter(item => !item.ok);
+            const missingCount = selectedCount - successCount;
+            const successItems = uploadResults.filter(item => item.ok);
+            const successDetail = successItems.length
+                ? successItems.slice(0, 5).map(item => `第 ${item.index} 张${item.ids.length ? `(${item.ids[0].slice(-6)})` : ''}`).join('、')
+                : '无';
+            const failedDetail = failedItems.length
+                ? failedItems.slice(0, 4).map(item => `第 ${item.index} 张：${item.error}`).join('；')
+                : '无';
+            const btn = document.getElementById('errorModalAction');
+            document.getElementById('errorModalMsg').textContent = `上传汇总：选择 ${selectedCount} 张，云端确认 ${successCount} 张，未完成 ${missingCount} 张。成功：${successDetail}。失败：${failedDetail}。版本：${MOBILE_PAGE_VERSION}`;
+            btn.style.display = 'none';
+            document.getElementById('errorModal').style.display = 'flex';
             setTimeout(() => {
                 uploadZone.classList.remove('uploading');
                 progressContainer.style.display = 'none';
