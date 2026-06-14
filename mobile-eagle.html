@@ -457,6 +457,9 @@
         const originalCheckbox = document.getElementById('originalCheckbox');
         const originalLabel = document.querySelector('.original-label');
         const originalLabelText = document.getElementById('originalLabelText');
+        // 调试开关：上传完成后的“上传汇总/调试”弹框默认隐藏。
+        // 排查手机端上传丢图、云端未返回 ID、ACK 异常时，可临时改为 true 查看每张图的上传步骤、HTTP 状态和返回内容。
+        const SHOW_UPLOAD_RESULT_DEBUG_MODAL = false;
 
         // --- 3. 初始化检查 ---
         if (!config.api || !config.sid || !config.t) {
@@ -692,9 +695,11 @@
                 const raw = item.responseText ? ` resp:${item.responseText}` : '';
                 return `第${item.index}张 ${item.type} ${item.sizeKB}KB [${item.steps.join('>')}]${suffix}${http}${error}${raw}`;
             }).join('；');
-            document.getElementById('errorModalMsg').textContent = `上传汇总：选择 ${selectedCount} 张，云端确认 ${successCount} 张，未完成 ${missingCount} 张。成功：${successDetail}。失败：${failedDetail}。版本：${MOBILE_PAGE_VERSION}。调试：${debugDetail}`;
-            btn.style.display = 'none';
-            document.getElementById('errorModal').style.display = 'flex';
+            if (SHOW_UPLOAD_RESULT_DEBUG_MODAL) {
+                document.getElementById('errorModalMsg').textContent = `上传汇总：选择 ${selectedCount} 张，云端确认 ${successCount} 张，未完成 ${missingCount} 张。成功：${successDetail}。失败：${failedDetail}。版本：${MOBILE_PAGE_VERSION}。调试：${debugDetail}`;
+                btn.style.display = 'none';
+                document.getElementById('errorModal').style.display = 'flex';
+            }
             setTimeout(() => {
                 uploadZone.classList.remove('uploading');
                 progressContainer.style.display = 'none';
