@@ -482,13 +482,24 @@
         let allowOriginal = false;
         let remainingQuota = 5;
         let freeLimit = 5;
+        let originalDailyLimit = 0;
+        let originalRemaining = 0;
 
         function updateOriginalOption() {
             if (!originalContainer || !originalCheckbox) return;
             if (allowOriginal) {
                 if (originalLabel) originalLabel.classList.remove('disabled');
-                if (originalLabelText) originalLabelText.textContent = '上传原图';
+                if (originalLabelText) {
+                    originalLabelText.textContent = Number.isFinite(originalRemaining)
+                        ? `上传原图（今日剩余 ${originalRemaining} 张）`
+                        : '上传原图';
+                }
                 originalCheckbox.disabled = false;
+            } else if (isPremium) {
+                originalCheckbox.checked = false;
+                originalCheckbox.disabled = true;
+                if (originalLabel) originalLabel.classList.add('disabled');
+                if (originalLabelText) originalLabelText.textContent = '今日原图额度已用完';
             } else {
                 originalCheckbox.checked = false;
                 originalCheckbox.disabled = true;
@@ -507,7 +518,12 @@
                 if (!result.ok) return result;
 
                 isPremium = result.isPremium === true;
-                allowOriginal = result.allowOriginal === true;
+                const hasOriginalQuota = Object.prototype.hasOwnProperty.call(result, 'originalRemaining');
+                originalDailyLimit = hasOriginalQuota && Number.isFinite(Number(result.originalDailyLimit)) ? Number(result.originalDailyLimit) : 0;
+                originalRemaining = hasOriginalQuota && Number.isFinite(Number(result.originalRemaining))
+                    ? Math.max(0, Number(result.originalRemaining))
+                    : (result.allowOriginal === true ? Number.MAX_SAFE_INTEGER : 0);
+                allowOriginal = result.allowOriginal === true && originalRemaining > 0;
                 isQuotaExceeded = result.quotaExceeded === true;
                 freeLimit = Number.isFinite(Number(result.freeLimit)) ? Number(result.freeLimit) : 5;
                 remainingQuota = isPremium ? Number.MAX_SAFE_INTEGER : Math.max(0, Number(result.remaining ?? freeLimit));
@@ -554,6 +570,25 @@
                 return;
             }
 
+            const wantsOriginal = originalCheckbox && originalCheckbox.checked;
+            if (wantsOriginal && !allowOriginal) {
+                document.getElementById('errorModalMsg').textContent = isPremium
+                    ? '今日原图上传额度已用完，请明天再用，或关闭原图改用高清压缩上传。'
+                    : '原图上传仅限永久会员使用，请先在电脑端插件中激活。';
+                document.getElementById('errorModalAction').style.display = isPremium ? 'none' : 'inline-flex';
+                document.getElementById('errorModal').style.display = 'flex';
+                fileInput.value = '';
+                return;
+            }
+
+            if (wantsOriginal && Number.isFinite(originalRemaining) && files.length > originalRemaining) {
+                document.getElementById('errorModalMsg').textContent = `今日原图额度剩余 ${originalRemaining} 张，你选择了 ${files.length} 张。请减少选择数量，或关闭原图改用高清压缩上传。`;
+                document.getElementById('errorModalAction').style.display = 'none';
+                document.getElementById('errorModal').style.display = 'flex';
+                fileInput.value = '';
+                return;
+            }
+
             if (!isPremium && files.length > remainingQuota) {
                 const overCount = files.length - remainingQuota;
                 document.getElementById('errorModalMsg').textContent = `今日免费额度剩余 ${remainingQuota} 张，你选择了 ${files.length} 张，还有 ${overCount} 张无法上传。请减少选择数量或激活永久会员。`;
@@ -593,6 +628,12 @@
                         debugItem.steps.push('original-blocked');
                         throw new Error('ORIGINAL_REQUIRES_PREMIUM');
                     }
+                    if (isOriginal && Number.isFinite(originalRemaining) && originalRemaining <= 0) {
+                        const err = new Error('ORIGINAL_QUOTA_EXCEEDED');
+                        err.code = 'ORIGINAL_QUOTA_EXCEEDED';
+                        throw err;
+                    }
+                    const dimensions = await getImageDimensions(file);
                     debugItem.steps.push(isOriginal ? 'read-original-start' : 'compress-start');
                     let base64;
                     if (isOriginal) {
@@ -603,6 +644,7 @@
                     debugItem.steps.push(isOriginal ? 'read-original-ok' : 'compress-ok');
                     debugItem.outputPrefix = typeof base64 === 'string' ? base64.slice(0, 30) : 'non-string';
                     debugItem.outputKB = Math.round((String(base64 || '').length * 0.75) / 1024);
+                    const uploadBytes = estimateDataUrlBytes(base64);
                     const fileId = createFileId();
                     debugItem.fileId = fileId;
                     debugItem.steps.push('fetch-start');
@@ -613,6 +655,12 @@
                         client: config.client,
                         image: base64,
                         isOriginal,
+                        imageInfo: {
+                            originalBytes: file.size || 0,
+                            compressedBytes: isOriginal ? (file.size || uploadBytes) : uploadBytes,
+                            width: dimensions.width,
+                            height: dimensions.height
+                        },
                         id: fileId
                     }, debugItem);
                     if (!result.ok) {
@@ -628,6 +676,11 @@
                     const percent = Math.round(((i + 1) / files.length) * 100);
                     progressFill.style.width = `${percent}%`;
                     successCount += Math.min(savedCount, 1);
+                    if (isOriginal && Number.isFinite(originalRemaining)) {
+                        originalRemaining = Math.max(0, originalRemaining - Math.min(savedCount, 1));
+                        allowOriginal = isPremium && originalRemaining > 0;
+                        updateOriginalOption();
+                    }
                     uploadResults.push({
                         ok: true,
                         index: i + 1,
@@ -651,6 +704,10 @@
                     } else if (err.code === 'ORIGINAL_REQUIRES_PREMIUM' || err.message === 'ORIGINAL_REQUIRES_PREMIUM') {
                         document.getElementById('errorModalMsg').textContent = '原图上传仅限永久会员使用，请先在电脑端插件中激活';
                         btn.style.display = 'inline-flex';
+                        shouldStop = true;
+                    } else if (err.code === 'ORIGINAL_QUOTA_EXCEEDED' || err.message === 'ORIGINAL_QUOTA_EXCEEDED') {
+                        document.getElementById('errorModalMsg').textContent = '今日原图上传额度已用完，请明天再用，或关闭原图改用高清压缩上传。';
+                        btn.style.display = 'none';
                         shouldStop = true;
                     } else if (err.message === 'VIDEO_TOO_LARGE') {
                         document.getElementById('errorModalMsg').textContent = `当前视频体积过大 (${(file.size / 1024 / 1024).toFixed(1)}MB)。网页端直传视频限额 25MB。建议使用本页下方的「iOS 快捷指令」，它会自动进行手机端视频极速硬件压缩，或请自行压缩视频后再上传。`;
@@ -713,6 +770,36 @@
         });
 
         // --- 5. 工具函数 ---
+        function estimateDataUrlBytes(dataUrl) {
+            let b64 = String(dataUrl || '').replace(/\s/g, '');
+            if (b64.includes('base64,')) b64 = b64.split('base64,')[1];
+            const padding = b64.endsWith('==') ? 2 : (b64.endsWith('=') ? 1 : 0);
+            return Math.max(0, Math.floor((b64.length * 3) / 4) - padding);
+        }
+
+        function getImageDimensions(file) {
+            return new Promise(resolve => {
+                if (!file || !file.type || !file.type.startsWith('image/')) {
+                    resolve({ width: null, height: null });
+                    return;
+                }
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    resolve({
+                        width: img.naturalWidth || img.width || null,
+                        height: img.naturalHeight || img.height || null
+                    });
+                };
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    resolve({ width: null, height: null });
+                };
+                img.src = url;
+            });
+        }
+
         function compressImage(file, quality = 0.85) {
             return new Promise((resolve, reject) => {
                 if (!file.type.startsWith('image/')) {
