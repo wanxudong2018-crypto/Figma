@@ -9,6 +9,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="仓鼠快传">
+    <link rel="manifest" href="pwa-manifest.json">
     <style>
         :root {
             --bg: linear-gradient(180deg, #5A85D0 0%, #EDF0FB 51%, #EDF0FB 100%);
@@ -933,6 +934,95 @@
             const url = buildApiUrl('/api/upload', { sid: config.sid, t: config.t, client: config.client });
             navigator.clipboard.writeText(url).then(() => showToast('✅ 已复制快捷指令链接'));
         }
+
+        // --- 6. Android PWA Share Target 支持 ---
+
+        // 注册 Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                console.log('[PWA] SW registered, scope:', reg.scope);
+            }).catch(err => {
+                console.warn('[PWA] SW registration failed:', err);
+            });
+        }
+
+        // 将凭证同步到 Service Worker 的 IndexedDB，以便 Share Target POST 时读取
+        function syncCredentialsToSW() {
+            if (!config.sid || !config.t || !config.api) return;
+            if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
+                // SW 尚未激活，等待激活后再同步
+                navigator.serviceWorker.ready.then(() => syncCredentialsToSW());
+                return;
+            }
+            navigator.serviceWorker.controller.postMessage({
+                type: 'STORE_CREDENTIALS',
+                sid: config.sid,
+                t: config.t,
+                api: config.api,
+                client: config.client
+            });
+            console.log('[PWA] 凭证已同步到 SW');
+        }
+
+        // 初始化后立即同步凭证
+        if (config.sid && config.t) {
+            syncCredentialsToSW();
+        }
+
+        // 处理 Android 系统分享后的回显
+        (function handleSharedParams() {
+            const shared = urlParams.get('shared');
+            if (shared !== '1') return;
+
+            const count = urlParams.get('count');
+            const total = urlParams.get('total');
+            const error = urlParams.get('error');
+            const pending = urlParams.get('pending');
+
+            if (count) {
+                const msg = total
+                    ? `已通过系统分享上传 ${count}/${total} 张图片`
+                    : `已通过系统分享上传 ${count} 张图片`;
+                showToast(msg);
+                progressLabel.textContent = msg;
+            } else if (error === 'no_creds') {
+                showToast(`请先扫码绑定电脑端，${pending ? `(${pending} 张图片待上传)` : ''}`);
+            } else if (error === 'no_file') {
+                showToast('系统分享未携带文件');
+            } else if (error === 'QUOTA_EXCEEDED') {
+                showToast('今日免费额度已用完');
+            } else if (error) {
+                showToast('系统分享上传失败: ' + error);
+            }
+        })();
+
+        // Android PWA 安装提示
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // 检测 Android 且未安装时，显示安装引导
+            const isAndroid = /android/i.test(navigator.userAgent);
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            if (isAndroid && !isStandalone) {
+                const installBtn = document.createElement('button');
+                installBtn.textContent = '安装到手机（支持系统分享）';
+                installBtn.style.cssText = 'display:block;width:100%;padding:12px;margin:8px 0;border:none;border-radius:12px;background:#52C41A;color:#fff;font-size:14px;font-weight:600;cursor:pointer;';
+                installBtn.onclick = async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const result = await deferredPrompt.userChoice;
+                        if (result.outcome === 'accepted') {
+                            installBtn.textContent = '已安装，请从系统分享菜单使用';
+                            installBtn.disabled = true;
+                        }
+                        deferredPrompt = null;
+                    }
+                };
+                const card = document.querySelector('.card');
+                if (card) card.appendChild(installBtn);
+            }
+        });
     </script>
 </body>
 </html>

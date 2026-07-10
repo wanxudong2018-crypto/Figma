@@ -1,12 +1,12 @@
 {
-  "name": "仓鼠快传",
+  "name": "仓鼠快传·Eagle",
   "short_name": "仓鼠快传",
-  "description": "手机截图一键发送到 Figma 画布",
-  "start_url": "/Figma/mobile-figma.html",
+  "description": "手机图片一键分享到电脑端 Eagle",
+  "start_url": "/Figma/mobile-eagle.html",
   "scope": "/Figma/",
   "display": "standalone",
-  "background_color": "#0a0a0b",
-  "theme_color": "#6366f1",
+  "background_color": "#ECEDF8",
+  "theme_color": "#5A85D0",
   "icons": [
     {
       "src": "https://wanxudong2018-crypto.github.io/Figma/icon.png",
@@ -21,7 +21,7 @@
     }
   ],
   "share_target": {
-    "action": "/Figma/mobile.html",
+    "action": "/Figma/mobile-eagle-share.html",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
