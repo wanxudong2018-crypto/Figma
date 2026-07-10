@@ -484,6 +484,7 @@
         let freeLimit = 5;
         let originalDailyLimit = 0;
         let originalRemaining = 0;
+        const FREE_QUOTA_MODAL_MESSAGE = '今日免费额度已用完，请购买会员后获取【订单号】在电脑端插件中激活永久会员，获得无限上传权益';
 
         function updateOriginalOption() {
             if (!originalContainer || !originalCheckbox) return;
@@ -547,7 +548,7 @@
             await checkInitialQuota();
             
             if (isQuotaExceeded) {
-                document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活永久会员';
+                document.getElementById('errorModalMsg').textContent = FREE_QUOTA_MODAL_MESSAGE;
                 document.getElementById('errorModalAction').style.display = 'inline-flex';
                 document.getElementById('errorModal').style.display = 'flex';
                 return;
@@ -563,7 +564,7 @@
 
             await checkInitialQuota();
             if (isQuotaExceeded) {
-                document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活永久会员';
+                document.getElementById('errorModalMsg').textContent = FREE_QUOTA_MODAL_MESSAGE;
                 document.getElementById('errorModalAction').style.display = 'inline-flex';
                 document.getElementById('errorModal').style.display = 'flex';
                 fileInput.value = '';
@@ -698,7 +699,7 @@
                     const btn = document.getElementById('errorModalAction');
                     let shouldStop = false;
                     if (err.code === 'QUOTA_EXCEEDED') {
-                        document.getElementById('errorModalMsg').textContent = '今日免费额度已用完，请在电脑端插件中激活永久会员';
+                        document.getElementById('errorModalMsg').textContent = FREE_QUOTA_MODAL_MESSAGE;
                         btn.style.display = 'inline-flex';
                         shouldStop = true;
                     } else if (err.code === 'ORIGINAL_REQUIRES_PREMIUM' || err.message === 'ORIGINAL_REQUIRES_PREMIUM') {
