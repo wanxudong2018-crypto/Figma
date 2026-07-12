@@ -234,7 +234,7 @@
             border: 1px solid #EBEDF0;
             background: #F5F6F9;
             color: var(--text);
-            margin-bottom: 20px;
+            margin-bottom: 8px;
             transition: all 0.2s;
         }
 
@@ -249,6 +249,16 @@
             color: var(--sub);
             margin-top: 10px;
             line-height: 1.6;
+        }
+
+        .setup-divider {
+            height: 1px;
+            background: #EBEDF0;
+            margin: 28px 0 22px;
+        }
+
+        .step-hint + .step-label {
+            margin-top: 22px;
         }
 
         /* 模态框样式 */
@@ -406,11 +416,45 @@
         <div class="step-hint" id="copyHint" style="display:none">
             复制专属链接 → 打开「仓鼠快传」快捷指令 → 粘贴到顶部文字框中
         </div>
+
+        <div class="setup-divider"></div>
+
+        <div class="section-header">
+            <span class="section-title">Android 端原生分享设置方案</span>
+            <a href="#" class="section-link">视频引导</a>
+        </div>
+
+        <div class="step-label">1、下载 Android APK</div>
+        <a id="btnAndroidApk" href="https://github.com/wanxudong2018-crypto/hamster-share/releases/download/%E4%BB%93%E9%BC%A0%E5%BF%AB%E4%BC%A0/V1.0.0.apk" target="_blank"
+            class="step-btn">
+            下载 Android APK
+        </a>
+        <div class="step-hint">
+            点击后直接下载 APK 安装包，下载完成后打开文件并安装
+        </div>
+
+        <div class="step-label">2、安装并完成系统授权</div>
+        <div class="step-hint">
+            安装时允许浏览器安装未知应用；首次从相册分享时，选择「仓鼠快传」并允许读取图片/视频
+        </div>
+
+        <div class="step-label">3、配置 App 专属链接</div>
+        <button id="copyAndroidBtn" class="step-btn step-btn-dark" onclick="copyAndroidBindUrl()">
+            复制安卓绑定链接
+        </button>
+        <div class="step-hint">
+            复制安卓绑定链接 → 打开「仓鼠快传」App → 粘贴到「绑定插件地址」输入框中
+        </div>
+
+        <div class="step-label">4、从相册原生分享</div>
+        <div class="step-hint">
+            在相册、微信或文件管理器中选择图片/视频 → 分享 → 仓鼠快传，即可直接传输到 Eagle
+        </div>
     </div>
 
     <script>
         // --- 1. 参数与配置 ---
-        const MOBILE_PAGE_VERSION = '20260612-debug-strict-v5';
+        const MOBILE_PAGE_VERSION = '20260712-android-native-share-v1';
         const urlParams = new URLSearchParams(window.location.search);
         const config = {
             api: urlParams.get('api') || window.location.origin,
@@ -926,13 +970,24 @@
             setTimeout(() => t.style.display = 'none', 3000);
         }
 
-        function copyUploadUrl() {
+        function getDedicatedUploadUrl() {
+            return buildApiUrl('/api/upload', { sid: config.sid, t: config.t, client: config.client });
+        }
+
+        function copyDedicatedUploadUrl(successMessage) {
             if (!config.sid) {
                 showToast('⚠️ 请通过插件扫码进入');
                 return;
             }
-            const url = buildApiUrl('/api/upload', { sid: config.sid, t: config.t, client: config.client });
-            navigator.clipboard.writeText(url).then(() => showToast('✅ 已复制快捷指令链接'));
+            navigator.clipboard.writeText(getDedicatedUploadUrl()).then(() => showToast(successMessage));
+        }
+
+        function copyUploadUrl() {
+            copyDedicatedUploadUrl('✅ 已复制快捷指令链接');
+        }
+
+        function copyAndroidBindUrl() {
+            copyDedicatedUploadUrl('✅ 已复制安卓绑定链接');
         }
 
         // --- 6. Android PWA Share Target 支持 ---
