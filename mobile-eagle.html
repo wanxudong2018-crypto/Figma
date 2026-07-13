@@ -534,6 +534,29 @@
         let originalRemaining = 0;
         const MAX_VIDEO_UPLOAD_BYTES = 20 * 1024 * 1024;
         const FREE_QUOTA_MODAL_MESSAGE = '今日免费额度已用完，请购买会员后获取【订单号】在电脑端插件中激活会员，继续使用会员权益';
+        const HEAVY_QUOTA_MODAL_MESSAGE = '今日原图/视频额度已用完，请明天再用，或关闭原图改用高清压缩上传。';
+
+        function showErrorModal(message, showAction = false) {
+            document.getElementById('errorModalMsg').textContent = message;
+            document.getElementById('errorModalAction').style.display = showAction ? 'inline-flex' : 'none';
+            document.getElementById('errorModal').style.display = 'flex';
+        }
+
+        function showMembershipModal(message) {
+            document.getElementById('errorModalMsg').innerHTML = `
+                <div style="text-align:left;">
+                    <div style="font-weight:700; margin-bottom:10px;">${message}</div>
+                    <div style="font-weight:700; margin-bottom:6px;">开通会员可享受：</div>
+                    <div>• 高清压缩图片不限次数传输</div>
+                    <div>• 原图 / 视频每日合计 30 次</div>
+                    <div>• 单个视频最大 20MB</div>
+                    <div>• 单次最多待同步 10 个文件</div>
+                    <div>• 支持手机网页、iOS 快捷指令、安卓分享入口</div>
+                </div>
+            `;
+            document.getElementById('errorModalAction').style.display = 'inline-flex';
+            document.getElementById('errorModal').style.display = 'flex';
+        }
 
         function formatOriginalQuotaText() {
             if (!Number.isFinite(originalDailyLimit) || originalDailyLimit <= 0) {
@@ -601,13 +624,25 @@
             await checkInitialQuota();
             
             if (isQuotaExceeded) {
-                document.getElementById('errorModalMsg').textContent = FREE_QUOTA_MODAL_MESSAGE;
-                document.getElementById('errorModalAction').style.display = 'inline-flex';
-                document.getElementById('errorModal').style.display = 'flex';
+                showMembershipModal('今日免费额度已用完');
                 return;
             }
             
             fileInput.click();
+        });
+
+        originalContainer.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await checkInitialQuota();
+            if (allowOriginal) {
+                return;
+            }
+            e.preventDefault();
+            if (isPremium) {
+                showErrorModal(HEAVY_QUOTA_MODAL_MESSAGE, false);
+            } else {
+                showMembershipModal('原图/视频上传为会员专享');
+            }
         });
 
         // --- 4. 上传逻辑 ---
@@ -617,9 +652,7 @@
 
             await checkInitialQuota();
             if (isQuotaExceeded) {
-                document.getElementById('errorModalMsg').textContent = FREE_QUOTA_MODAL_MESSAGE;
-                document.getElementById('errorModalAction').style.display = 'inline-flex';
-                document.getElementById('errorModal').style.display = 'flex';
+                showMembershipModal('今日免费额度已用完');
                 fileInput.value = '';
                 return;
             }
@@ -628,19 +661,14 @@
             const videoCount = files.filter(file => file.type && file.type.startsWith('video/')).length;
             const heavyCount = files.filter(file => wantsOriginal || (file.type && file.type.startsWith('video/'))).length;
             if (wantsOriginal && !allowOriginal) {
-                document.getElementById('errorModalMsg').textContent = isPremium
-                    ? '今日原图/视频额度已用完，请明天再用，或关闭原图改用高清压缩上传。'
-                    : '原图上传仅限会员使用，请先在电脑端插件中激活。';
-                document.getElementById('errorModalAction').style.display = isPremium ? 'none' : 'inline-flex';
-                document.getElementById('errorModal').style.display = 'flex';
+                if (isPremium) showErrorModal(HEAVY_QUOTA_MODAL_MESSAGE, false);
+                else showMembershipModal('原图/视频上传为会员专享');
                 fileInput.value = '';
                 return;
             }
 
             if (videoCount > 0 && !isPremium) {
-                document.getElementById('errorModalMsg').textContent = '视频上传仅限会员使用，请先在电脑端插件中激活。';
-                document.getElementById('errorModalAction').style.display = 'inline-flex';
-                document.getElementById('errorModal').style.display = 'flex';
+                showMembershipModal('视频上传为会员专享');
                 fileInput.value = '';
                 return;
             }
@@ -666,6 +694,7 @@
             progressContainer.style.display = 'block';
             let successCount = 0;
             let stoppedByError = false;
+            let heavyQuotaReachedAfterUpload = false;
             const uploadResults = [];
             const selectedCount = files.length;
             const debugSteps = files.map((file, index) => ({
@@ -747,7 +776,11 @@
                     progressFill.style.width = `${percent}%`;
                     successCount += Math.min(savedCount, 1);
                     if ((isOriginal || isVideoFile) && Number.isFinite(originalRemaining)) {
+                        const beforeHeavyRemaining = originalRemaining;
                         originalRemaining = Math.max(0, originalRemaining - Math.min(savedCount, 1));
+                        if (isPremium && beforeHeavyRemaining > 0 && originalRemaining === 0) {
+                            heavyQuotaReachedAfterUpload = true;
+                        }
                         allowOriginal = isPremium && originalRemaining > 0;
                         updateOriginalOption();
                     }
@@ -767,13 +800,14 @@
                     debugItem.steps.push('error');
                     const btn = document.getElementById('errorModalAction');
                     let shouldStop = false;
+                    let modalShown = false;
                     if (err.code === 'QUOTA_EXCEEDED') {
-                        document.getElementById('errorModalMsg').textContent = FREE_QUOTA_MODAL_MESSAGE;
-                        btn.style.display = 'inline-flex';
+                        showMembershipModal('今日免费额度已用完');
+                        modalShown = true;
                         shouldStop = true;
                     } else if (err.code === 'ORIGINAL_REQUIRES_PREMIUM' || err.message === 'ORIGINAL_REQUIRES_PREMIUM' || err.code === 'HEAVY_REQUIRES_PREMIUM') {
-                        document.getElementById('errorModalMsg').textContent = '原图/视频上传仅限会员使用，请先在电脑端插件中激活';
-                        btn.style.display = 'inline-flex';
+                        showMembershipModal('原图/视频上传为会员专享');
+                        modalShown = true;
                         shouldStop = true;
                     } else if (err.code === 'ORIGINAL_QUOTA_EXCEEDED' || err.message === 'ORIGINAL_QUOTA_EXCEEDED' || err.code === 'HEAVY_QUOTA_EXCEEDED') {
                         document.getElementById('errorModalMsg').textContent = '今日原图/视频额度已用完，请明天再用，或关闭原图改用高清压缩上传。';
@@ -792,7 +826,7 @@
                         name: file.name || `第 ${i + 1} 张`,
                         error: msg
                     });
-                    document.getElementById('errorModal').style.display = 'flex';
+                    if (!modalShown) document.getElementById('errorModal').style.display = 'flex';
                     if (shouldStop) break;
                 }
             }
@@ -826,6 +860,8 @@
                 document.getElementById('errorModalMsg').textContent = `上传汇总：选择 ${selectedCount} 张，云端确认 ${successCount} 张，未完成 ${missingCount} 张。成功：${successDetail}。失败：${failedDetail}。版本：${MOBILE_PAGE_VERSION}。调试：${debugDetail}`;
                 btn.style.display = 'none';
                 document.getElementById('errorModal').style.display = 'flex';
+            } else if (heavyQuotaReachedAfterUpload && !stoppedByError) {
+                showErrorModal('今日原图/视频额度已用完（30/30 次）。明天会自动恢复，也可以继续使用高清压缩图片上传。', false);
             }
             setTimeout(() => {
                 uploadZone.classList.remove('uploading');
