@@ -4,12 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>仓鼠快传</title>
     <meta name="theme-color" content="#ECEDF8">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="仓鼠快传">
-    <link rel="manifest" href="pwa-manifest.json">
     <style>
         :root {
             --bg: linear-gradient(180deg, #5A85D0 0%, #EDF0FB 51%, #EDF0FB 100%);
@@ -454,7 +456,7 @@
 
     <script>
         // --- 1. 参数与配置 ---
-        const MOBILE_PAGE_VERSION = '20260712-android-native-share-v1';
+        const MOBILE_PAGE_VERSION = '20260713-mobile-eagle-apk-link-v2';
         const urlParams = new URLSearchParams(window.location.search);
         const config = {
             api: urlParams.get('api') || window.location.origin,
@@ -529,7 +531,8 @@
         let freeLimit = 5;
         let originalDailyLimit = 0;
         let originalRemaining = 0;
-        const FREE_QUOTA_MODAL_MESSAGE = '今日免费额度已用完，请购买会员后获取【订单号】在电脑端插件中激活永久会员，获得无限上传权益';
+        const MAX_VIDEO_UPLOAD_BYTES = 20 * 1024 * 1024;
+        const FREE_QUOTA_MODAL_MESSAGE = '今日免费额度已用完，请购买会员后获取【订单号】在电脑端插件中激活会员，继续使用会员权益';
 
         function updateOriginalOption() {
             if (!originalContainer || !originalCheckbox) return;
@@ -537,7 +540,7 @@
                 if (originalLabel) originalLabel.classList.remove('disabled');
                 if (originalLabelText) {
                     originalLabelText.textContent = Number.isFinite(originalRemaining)
-                        ? `上传原图（今日剩余 ${originalRemaining} 张）`
+                        ? `上传原图（原图/视频剩余 ${originalRemaining} 次）`
                         : '上传原图';
                 }
                 originalCheckbox.disabled = false;
@@ -545,7 +548,7 @@
                 originalCheckbox.checked = false;
                 originalCheckbox.disabled = true;
                 if (originalLabel) originalLabel.classList.add('disabled');
-                if (originalLabelText) originalLabelText.textContent = '今日原图额度已用完';
+                if (originalLabelText) originalLabelText.textContent = '今日原图/视频额度已用完';
             } else {
                 originalCheckbox.checked = false;
                 originalCheckbox.disabled = true;
@@ -577,7 +580,7 @@
 
                 if (isQuotaExceeded) {
                     isQuotaExceeded = true;
-                    uploadLabel.innerHTML = '今日免费额度已用完，<a href="https://www.ifdian.net/item/9e5ce82c4ea411f19fd852540025c377?utm_source=copylink&utm_medium=link" target="_blank" onclick="event.stopPropagation()" style="color: var(--purple); text-decoration: none; font-weight: 600;">请激活永久会员</a>';
+                    uploadLabel.innerHTML = '今日免费额度已用完，<a href="https://www.ifdian.net/item/9e5ce82c4ea411f19fd852540025c377?utm_source=copylink&utm_medium=link" target="_blank" onclick="event.stopPropagation()" style="color: var(--purple); text-decoration: none; font-weight: 600;">请激活会员</a>';
                     uploadLabel.style.color = 'var(--text)';
                 } else {
                     uploadLabel.textContent = '点击选择或拍摄图片/视频';
@@ -617,18 +620,28 @@
             }
 
             const wantsOriginal = originalCheckbox && originalCheckbox.checked;
+            const videoCount = files.filter(file => file.type && file.type.startsWith('video/')).length;
+            const heavyCount = files.filter(file => wantsOriginal || (file.type && file.type.startsWith('video/'))).length;
             if (wantsOriginal && !allowOriginal) {
                 document.getElementById('errorModalMsg').textContent = isPremium
-                    ? '今日原图上传额度已用完，请明天再用，或关闭原图改用高清压缩上传。'
-                    : '原图上传仅限永久会员使用，请先在电脑端插件中激活。';
+                    ? '今日原图/视频额度已用完，请明天再用，或关闭原图改用高清压缩上传。'
+                    : '原图上传仅限会员使用，请先在电脑端插件中激活。';
                 document.getElementById('errorModalAction').style.display = isPremium ? 'none' : 'inline-flex';
                 document.getElementById('errorModal').style.display = 'flex';
                 fileInput.value = '';
                 return;
             }
 
-            if (wantsOriginal && Number.isFinite(originalRemaining) && files.length > originalRemaining) {
-                document.getElementById('errorModalMsg').textContent = `今日原图额度剩余 ${originalRemaining} 张，你选择了 ${files.length} 张。请减少选择数量，或关闭原图改用高清压缩上传。`;
+            if (videoCount > 0 && !isPremium) {
+                document.getElementById('errorModalMsg').textContent = '视频上传仅限会员使用，请先在电脑端插件中激活。';
+                document.getElementById('errorModalAction').style.display = 'inline-flex';
+                document.getElementById('errorModal').style.display = 'flex';
+                fileInput.value = '';
+                return;
+            }
+
+            if (heavyCount > 0 && Number.isFinite(originalRemaining) && heavyCount > originalRemaining) {
+                document.getElementById('errorModalMsg').textContent = `今日原图/视频额度剩余 ${originalRemaining} 次，你选择了 ${heavyCount} 个高资源文件。请减少选择数量，或改用高清压缩传图。`;
                 document.getElementById('errorModalAction').style.display = 'none';
                 document.getElementById('errorModal').style.display = 'flex';
                 fileInput.value = '';
@@ -637,7 +650,7 @@
 
             if (!isPremium && files.length > remainingQuota) {
                 const overCount = files.length - remainingQuota;
-                document.getElementById('errorModalMsg').textContent = `今日免费额度剩余 ${remainingQuota} 张，你选择了 ${files.length} 张，还有 ${overCount} 张无法上传。请减少选择数量或激活永久会员。`;
+                document.getElementById('errorModalMsg').textContent = `今日免费额度剩余 ${remainingQuota} 张，你选择了 ${files.length} 张，还有 ${overCount} 张无法上传。请减少选择数量或激活会员。`;
                 document.getElementById('errorModalAction').style.display = 'inline-flex';
                 document.getElementById('errorModal').style.display = 'flex';
                 fileInput.value = '';
@@ -662,21 +675,27 @@
                 const file = files[i];
                 const debugItem = debugSteps[i];
                 try {
-                    // 网页直传视频大小限制为 25MB，防止过大视频消耗海量云端流量与手机流量
-                    if (file.type.startsWith('video/') && file.size > 25 * 1024 * 1024) {
+                    // 网页直传视频大小限制为 20MB，防止过大视频消耗海量云端流量与手机流量
+                    if (file.type.startsWith('video/') && file.size > MAX_VIDEO_UPLOAD_BYTES) {
                         debugItem.steps.push('video-too-large');
                         throw new Error('VIDEO_TOO_LARGE');
                     }
 
                     progressLabel.textContent = `正在上传 ${i + 1}/${files.length}`;
                     const isOriginal = allowOriginal && originalCheckbox && originalCheckbox.checked;
+                    const isVideoFile = file.type && file.type.startsWith('video/');
                     if (originalCheckbox && originalCheckbox.checked && !isPremium) {
                         debugItem.steps.push('original-blocked');
                         throw new Error('ORIGINAL_REQUIRES_PREMIUM');
                     }
-                    if (isOriginal && Number.isFinite(originalRemaining) && originalRemaining <= 0) {
-                        const err = new Error('ORIGINAL_QUOTA_EXCEEDED');
-                        err.code = 'ORIGINAL_QUOTA_EXCEEDED';
+                    if (isVideoFile && !isPremium) {
+                        const err = new Error('HEAVY_REQUIRES_PREMIUM');
+                        err.code = 'HEAVY_REQUIRES_PREMIUM';
+                        throw err;
+                    }
+                    if ((isOriginal || isVideoFile) && Number.isFinite(originalRemaining) && originalRemaining <= 0) {
+                        const err = new Error('HEAVY_QUOTA_EXCEEDED');
+                        err.code = 'HEAVY_QUOTA_EXCEEDED';
                         throw err;
                     }
                     const dimensions = await getImageDimensions(file);
@@ -722,7 +741,7 @@
                     const percent = Math.round(((i + 1) / files.length) * 100);
                     progressFill.style.width = `${percent}%`;
                     successCount += Math.min(savedCount, 1);
-                    if (isOriginal && Number.isFinite(originalRemaining)) {
+                    if ((isOriginal || isVideoFile) && Number.isFinite(originalRemaining)) {
                         originalRemaining = Math.max(0, originalRemaining - Math.min(savedCount, 1));
                         allowOriginal = isPremium && originalRemaining > 0;
                         updateOriginalOption();
@@ -747,16 +766,16 @@
                         document.getElementById('errorModalMsg').textContent = FREE_QUOTA_MODAL_MESSAGE;
                         btn.style.display = 'inline-flex';
                         shouldStop = true;
-                    } else if (err.code === 'ORIGINAL_REQUIRES_PREMIUM' || err.message === 'ORIGINAL_REQUIRES_PREMIUM') {
-                        document.getElementById('errorModalMsg').textContent = '原图上传仅限永久会员使用，请先在电脑端插件中激活';
+                    } else if (err.code === 'ORIGINAL_REQUIRES_PREMIUM' || err.message === 'ORIGINAL_REQUIRES_PREMIUM' || err.code === 'HEAVY_REQUIRES_PREMIUM') {
+                        document.getElementById('errorModalMsg').textContent = '原图/视频上传仅限会员使用，请先在电脑端插件中激活';
                         btn.style.display = 'inline-flex';
                         shouldStop = true;
-                    } else if (err.code === 'ORIGINAL_QUOTA_EXCEEDED' || err.message === 'ORIGINAL_QUOTA_EXCEEDED') {
-                        document.getElementById('errorModalMsg').textContent = '今日原图上传额度已用完，请明天再用，或关闭原图改用高清压缩上传。';
+                    } else if (err.code === 'ORIGINAL_QUOTA_EXCEEDED' || err.message === 'ORIGINAL_QUOTA_EXCEEDED' || err.code === 'HEAVY_QUOTA_EXCEEDED') {
+                        document.getElementById('errorModalMsg').textContent = '今日原图/视频额度已用完，请明天再用，或关闭原图改用高清压缩上传。';
                         btn.style.display = 'none';
                         shouldStop = true;
-                    } else if (err.message === 'VIDEO_TOO_LARGE') {
-                        document.getElementById('errorModalMsg').textContent = `当前视频体积过大 (${(file.size / 1024 / 1024).toFixed(1)}MB)。网页端直传视频限额 25MB。建议使用本页下方的「iOS 快捷指令」，它会自动进行手机端视频极速硬件压缩，或请自行压缩视频后再上传。`;
+                    } else if (err.code === 'VIDEO_TOO_LARGE' || err.message === 'VIDEO_TOO_LARGE') {
+                        document.getElementById('errorModalMsg').textContent = `当前视频体积过大 (${(file.size / 1024 / 1024).toFixed(1)}MB)。视频上传单个最大 20MB。请压缩视频后再上传。`;
                         btn.style.display = 'none';
                     } else {
                         document.getElementById('errorModalMsg').textContent = `第 ${i + 1} 个文件上传失败: ${msg}`;
@@ -990,94 +1009,6 @@
             copyDedicatedUploadUrl('✅ 已复制安卓绑定链接');
         }
 
-        // --- 6. Android PWA Share Target 支持 ---
-
-        // 注册 Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').then(reg => {
-                console.log('[PWA] SW registered, scope:', reg.scope);
-            }).catch(err => {
-                console.warn('[PWA] SW registration failed:', err);
-            });
-        }
-
-        // 将凭证同步到 Service Worker 的 IndexedDB，以便 Share Target POST 时读取
-        function syncCredentialsToSW() {
-            if (!config.sid || !config.t || !config.api) return;
-            if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
-                // SW 尚未激活，等待激活后再同步
-                navigator.serviceWorker.ready.then(() => syncCredentialsToSW());
-                return;
-            }
-            navigator.serviceWorker.controller.postMessage({
-                type: 'STORE_CREDENTIALS',
-                sid: config.sid,
-                t: config.t,
-                api: config.api,
-                client: config.client
-            });
-            console.log('[PWA] 凭证已同步到 SW');
-        }
-
-        // 初始化后立即同步凭证
-        if (config.sid && config.t) {
-            syncCredentialsToSW();
-        }
-
-        // 处理 Android 系统分享后的回显
-        (function handleSharedParams() {
-            const shared = urlParams.get('shared');
-            if (shared !== '1') return;
-
-            const count = urlParams.get('count');
-            const total = urlParams.get('total');
-            const error = urlParams.get('error');
-            const pending = urlParams.get('pending');
-
-            if (count) {
-                const msg = total
-                    ? `已通过系统分享上传 ${count}/${total} 张图片`
-                    : `已通过系统分享上传 ${count} 张图片`;
-                showToast(msg);
-                progressLabel.textContent = msg;
-            } else if (error === 'no_creds') {
-                showToast(`请先扫码绑定电脑端，${pending ? `(${pending} 张图片待上传)` : ''}`);
-            } else if (error === 'no_file') {
-                showToast('系统分享未携带文件');
-            } else if (error === 'QUOTA_EXCEEDED') {
-                showToast('今日免费额度已用完');
-            } else if (error) {
-                showToast('系统分享上传失败: ' + error);
-            }
-        })();
-
-        // Android PWA 安装提示
-        let deferredPrompt = null;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // 检测 Android 且未安装时，显示安装引导
-            const isAndroid = /android/i.test(navigator.userAgent);
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-            if (isAndroid && !isStandalone) {
-                const installBtn = document.createElement('button');
-                installBtn.textContent = '安装到手机（支持系统分享）';
-                installBtn.style.cssText = 'display:block;width:100%;padding:12px;margin:8px 0;border:none;border-radius:12px;background:#52C41A;color:#fff;font-size:14px;font-weight:600;cursor:pointer;';
-                installBtn.onclick = async () => {
-                    if (deferredPrompt) {
-                        deferredPrompt.prompt();
-                        const result = await deferredPrompt.userChoice;
-                        if (result.outcome === 'accepted') {
-                            installBtn.textContent = '已安装，请从系统分享菜单使用';
-                            installBtn.disabled = true;
-                        }
-                        deferredPrompt = null;
-                    }
-                };
-                const card = document.querySelector('.card');
-                if (card) card.appendChild(installBtn);
-            }
-        });
     </script>
 </body>
 </html>
