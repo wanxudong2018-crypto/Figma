@@ -136,7 +136,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text);
             opacity: 0.85;
             cursor: pointer;
@@ -146,6 +146,7 @@
             transition: all 0.2s;
             border: 1px solid transparent;
             font-weight: 500;
+            white-space: nowrap;
         }
 
         .original-label.disabled {
@@ -385,7 +386,7 @@
             <div class="upload-original-container" onclick="event.stopPropagation()">
                 <label class="original-label">
                     <input type="checkbox" id="originalCheckbox">
-                    <span id="originalLabelText">上传原图（会员专享）</span>
+                    <span id="originalLabelText">上传原图/视频（会员专享）</span>
                 </label>
             </div>
             <div class="upload-progress">
@@ -534,26 +535,30 @@
         const MAX_VIDEO_UPLOAD_BYTES = 20 * 1024 * 1024;
         const FREE_QUOTA_MODAL_MESSAGE = '今日免费额度已用完，请购买会员后获取【订单号】在电脑端插件中激活会员，继续使用会员权益';
 
+        function formatOriginalQuotaText() {
+            if (!Number.isFinite(originalDailyLimit) || originalDailyLimit <= 0) {
+                return '上传原图/视频';
+            }
+            const used = Math.max(0, originalDailyLimit - Math.max(0, originalRemaining));
+            return `上传原图/视频（${used}/${originalDailyLimit} 次）`;
+        }
+
         function updateOriginalOption() {
             if (!originalContainer || !originalCheckbox) return;
             if (allowOriginal) {
                 if (originalLabel) originalLabel.classList.remove('disabled');
-                if (originalLabelText) {
-                    originalLabelText.textContent = Number.isFinite(originalRemaining)
-                        ? `上传原图（原图/视频剩余 ${originalRemaining} 次）`
-                        : '上传原图';
-                }
+                if (originalLabelText) originalLabelText.textContent = formatOriginalQuotaText();
                 originalCheckbox.disabled = false;
             } else if (isPremium) {
                 originalCheckbox.checked = false;
                 originalCheckbox.disabled = true;
                 if (originalLabel) originalLabel.classList.add('disabled');
-                if (originalLabelText) originalLabelText.textContent = '今日原图/视频额度已用完';
+                if (originalLabelText) originalLabelText.textContent = formatOriginalQuotaText();
             } else {
                 originalCheckbox.checked = false;
                 originalCheckbox.disabled = true;
                 if (originalLabel) originalLabel.classList.add('disabled');
-                if (originalLabelText) originalLabelText.textContent = '上传原图（会员专享）';
+                if (originalLabelText) originalLabelText.textContent = '上传原图/视频（会员专享）';
             }
         }
 
