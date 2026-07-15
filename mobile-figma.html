@@ -206,6 +206,16 @@
 
         .step-hint { font-size: 12px; color: var(--sub); line-height: 1.6; margin-top: -8px; }
 
+        .setup-divider {
+            height: 1px;
+            background: #EBEDF0;
+            margin: 28px 0 22px;
+        }
+
+        .step-hint + .step-label {
+            margin-top: 22px;
+        }
+
         .step-btn {
             display: flex;
             align-items: center;
@@ -377,11 +387,11 @@
     <div class="full-bleed-card">
         <div class="section-header">
             <span class="section-title">iOS 端原生分享设置方案</span>
-            <a href="#" class="section-link">视频引导</a>
+            <a href="https://my.feishu.cn/wiki/PhsxwXOBtiy5HLk1GmqcxLP0nkd?from=from_copylink" target="_blank" class="section-link">视频引导</a>
         </div>
 
         <div class="step-label">1、下载 iOS 快捷指令</div>
-        <a id="btnShortcut" href="https://www.icloud.com/shortcuts/84eec593c0644fc782897a80c66340a3" target="_blank"
+        <a id="btnShortcut" href="https://www.icloud.com/shortcuts/ab8866cf5ec14c57b02160afef467d36" target="_blank"
             class="step-btn">
             <svg width="16" height="16" viewBox="0 0 814 1000" fill="currentColor">
                 <path
@@ -397,6 +407,40 @@
         </button>
         <div class="step-hint" id="copyHint" style="display:none">
             复制专属链接 → 打开「发送到 figma」快捷指令 → 粘贴到顶部文字框中
+        </div>
+
+        <div class="setup-divider"></div>
+
+        <div class="section-header">
+            <span class="section-title">Android 端原生分享设置方案</span>
+            <a href="https://my.feishu.cn/wiki/PhsxwXOBtiy5HLk1GmqcxLP0nkd?from=from_copylink" target="_blank" class="section-link">视频引导</a>
+        </div>
+
+        <div class="step-label">1、下载仓鼠快传APP</div>
+        <a id="btnAndroidApk" href="https://github.com/wanxudong2018-crypto/hamster-share/releases/download/%E4%BB%93%E9%BC%A0%E5%BF%AB%E4%BC%A0/V1.0.0.apk" target="_blank"
+            class="step-btn">
+            下载仓鼠快传APP
+        </a>
+        <div class="step-hint">
+            点击后直接下载 APK 安装包，下载完成后打开文件并安装
+        </div>
+
+        <div class="step-label">2、安装并完成系统授权</div>
+        <div class="step-hint">
+            安装时允许浏览器安装未知应用；首次从相册分享时，选择「仓鼠快传」并允许读取图片/视频
+        </div>
+
+        <div class="step-label">3、配置 App 专属链接</div>
+        <button id="copyAndroidBtn" class="step-btn step-btn-dark" onclick="copyAndroidBindUrl()">
+            复制插件链接
+        </button>
+        <div class="step-hint">
+            复制插件链接 → 打开「仓鼠快传」App → 粘贴到「绑定插件地址」输入框中
+        </div>
+
+        <div class="step-label">4、从相册原生分享</div>
+        <div class="step-hint">
+            在相册、微信或文件管理器中选择图片 → 分享 → 仓鼠快传，即可直接传输到 Figma
         </div>
     </div>
 
@@ -440,6 +484,26 @@
                 btn.style.color = '#0a7c42'; btn.style.borderColor = '#0a7c42';
                 setTimeout(() => {
                     btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> 复制专属链接`;
+                    btn.style.color = ''; btn.style.borderColor = '';
+                }, 2000);
+            };
+            if (navigator.clipboard) { navigator.clipboard.writeText(_uploadUrl).then(ok); }
+            else {
+                const el = document.createElement('textarea');
+                el.value = _uploadUrl; document.body.appendChild(el);
+                el.select(); document.execCommand('copy');
+                document.body.removeChild(el); ok();
+            }
+        }
+
+        function copyAndroidBindUrl() {
+            if (!_uploadUrl) { showToast('⚠️ 请先通过插件扫码进入'); return; }
+            const btn = document.getElementById('copyAndroidBtn');
+            const ok = () => {
+                btn.textContent = '✅ 已复制插件链接！';
+                btn.style.color = '#0a7c42'; btn.style.borderColor = '#0a7c42';
+                setTimeout(() => {
+                    btn.innerHTML = `复制插件链接`;
                     btn.style.color = ''; btn.style.borderColor = '';
                 }, 2000);
             };
