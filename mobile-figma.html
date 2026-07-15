@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>仓鼠快传</title>
-    <link rel="manifest" href="/Figma/pwa-manifest.json">
     <meta name="theme-color" content="#ECEDF8">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -313,7 +312,7 @@
             <div class="modal-body" id="errorModalMsg">上传失败</div>
             <div class="modal-actions">
                 <button class="modal-btn-cancel" onclick="document.getElementById('errorModal').style.display='none'">关闭</button>
-                <a class="modal-btn-primary" id="errorModalAction" href="https://afdian.net/a/wanonedesign" target="_blank" style="display: none;">购买会员</a>
+                <a class="modal-btn-primary" id="errorModalAction" href="https://www.ifdian.net/item/9e5ce82c4ea411f19fd852540025c377?utm_source=copylink&utm_medium=link" target="_blank" style="display: none;">购买会员</a>
             </div>
         </div>
     </div>
@@ -430,12 +429,6 @@
             _uploadUrl = `${_api}/api/upload?sid=${_sid}&t=${_t}`;
             const hint = document.getElementById('copyHint');
             if (hint) hint.style.display = 'block';
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.ready.then(reg => {
-                    const sw = reg.active || reg.waiting || reg.installing;
-                    if (sw) sw.postMessage({ type: 'STORE_CREDENTIALS', sid: _sid, t: _t, api: _api });
-                });
-            }
         }
 
         // ─── Copy URL ───────────────────────────────────────────────────
@@ -502,12 +495,24 @@
 
             for (let i = 0; i < total; i++) {
                 try {
+                    const dimensions = await getImageDimensions(files[i]);
                     const base64 = await compressImage(files[i], 0.85);
                     const fileId = `img_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
-                    const res = await fetch(`${_api}/api/upload?sid=${_sid}&t=${_t}`, {
+                    const uploadBytes = estimateDataUrlBytes(base64);
+                    const res = await fetch(`${_api}/api/upload?sid=${_sid}&t=${_t}&client=figma`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image: base64, filename: files[i].name, id: fileId })
+                        body: JSON.stringify({
+                            image: base64,
+                            filename: files[i].name,
+                            id: fileId,
+                            imageInfo: {
+                                originalBytes: files[i].size || 0,
+                                compressedBytes: uploadBytes,
+                                width: dimensions.width,
+                                height: dimensions.height
+                            }
+                        })
                     });
                     
                     const result = await res.json();
@@ -610,15 +615,38 @@
             const r = new FileReader();
             r.readAsDataURL(f); r.onload = () => res(r.result); r.onerror = rej;
         });
-    </script>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/Figma/sw.js', { scope: '/Figma/' })
-                .then(r => console.log('[PWA] SW ok', r.scope))
-                .catch(e => console.error('[PWA] SW fail', e));
+        function getImageDimensions(file) {
+            return new Promise(resolve => {
+                if (!file || !file.type || !file.type.startsWith('image/')) {
+                    resolve({ width: null, height: null });
+                    return;
+                }
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    resolve({
+                        width: img.naturalWidth || img.width || null,
+                        height: img.naturalHeight || img.height || null
+                    });
+                };
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    resolve({ width: null, height: null });
+                };
+                img.src = url;
+            });
+        }
+
+        function estimateDataUrlBytes(dataUrl) {
+            let b64 = String(dataUrl || '').replace(/\s/g, '');
+            if (b64.includes('base64,')) b64 = b64.split('base64,')[1];
+            const padding = b64.endsWith('==') ? 2 : (b64.endsWith('=') ? 1 : 0);
+            return Math.max(0, Math.floor((b64.length * 3) / 4) - padding);
         }
     </script>
+
 </body>
 
 </html>
